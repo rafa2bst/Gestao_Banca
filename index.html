@@ -127,14 +127,22 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 .io{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 
 /* ---------- Cadastros ---------- */
-.cadgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.cad-add{display:flex;gap:8px;margin-bottom:12px}
+.cadwrap{display:flex;gap:16px;align-items:flex-start}
+#cad-burger{display:none;width:100%;margin-bottom:12px;text-align:left}
+.cad-menu{display:flex;flex-direction:column;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px;min-width:190px}
+.cad-mi{background:none;border:none;color:var(--mut);font-weight:600;font-size:14px;text-align:left;padding:10px 12px;border-radius:7px;border-left:2px solid transparent}
+.cad-mi:hover{color:var(--txt);background:var(--panel2)}
+.cad-mi.on{color:var(--txt);background:var(--panel2);border-left-color:var(--gold)}
+.cad-add{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.cad-add input{flex:1;min-width:160px}
 .cad-list{max-height:340px;overflow-y:auto}
 .cad-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #1c2634;font-size:13.5px}
 .cad-item:hover{background:#19222d}
 .cad-item .x{background:none;border:none;color:var(--dim);font-size:14px;padding:2px 7px;border-radius:4px}
 .cad-item .x:hover{color:var(--red);background:var(--red-soft)}
 .cad-count{font-size:11px;color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none;margin-left:6px}
+tr.grp td{background:var(--panel2);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 /* ---------- Aba Banca ---------- */
 .bcard{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:var(--panel2)}
@@ -149,7 +157,12 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 
 @media(max-width:900px){
   .hero{grid-template-columns:1fr}
-  .grid2,.cadgrid{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+  .cadwrap{flex-direction:column}
+  #cad-burger{display:block}
+  .cad-menu{display:none;width:100%}
+  .cad-menu.open{display:flex}
+  .cadwrap .panel{width:100%}
   .formgrid{grid-template-columns:repeat(2,1fr)}
   .formgrid .c3,.formgrid .c6{grid-column:span 2}
   .cfg{grid-template-columns:1fr}
@@ -187,6 +200,7 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
   <nav>
     <button data-tab="banca">Banca</button>
     <button data-tab="painel" class="on">Painel</button>
+    <button data-tab="dashboard">Dashboard</button>
     <button data-tab="entradas">Entradas</button>
     <button data-tab="analises">Análises</button>
     <button data-tab="cadastros">Cadastros</button>
@@ -257,12 +271,13 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
     <h2 id="f-title">Nova entrada</h2>
     <div class="formgrid">
       <div class="c2"><label>Data</label><input type="date" id="f-data"></div>
+      <div class="c2"><label>País</label><input list="dl-pais" id="f-pais" placeholder="Ex.: Inglaterra"></div>
       <div class="c2"><label>Competição</label><input list="dl-comp" id="f-comp" placeholder="Ex.: Premier League"></div>
-      <div class="c2"><label>Tipo</label><select id="f-tipo"><option>Pré Live</option><option>Live</option></select></div>
       <div class="c3"><label>Mandante</label><input list="dl-times" id="f-mand" placeholder="Time da casa"></div>
       <div class="c3"><label>Visitante</label><input list="dl-times" id="f-vis" placeholder="Time visitante"></div>
-      <div class="c3"><label>Forma de trabalho</label><input list="dl-forma" id="f-forma" placeholder="Ex.: Lay - Favorito"></div>
-      <div class="c3"><label>Mercado</label><input list="dl-merc" id="f-merc" placeholder="Ex.: Match Odds"></div>
+      <div class="c2"><label>Forma de trabalho</label><input list="dl-forma" id="f-forma" placeholder="Ex.: Lay - Favorito"></div>
+      <div class="c2"><label>Mercado</label><input list="dl-merc" id="f-merc" placeholder="Ex.: Match Odds"></div>
+      <div class="c2"><label>Tipo</label><select id="f-tipo"><option>Pré Live</option><option>Live</option></select></div>
       <div class="c2"><label>Stake (R$)</label><input type="number" step="0.01" id="f-stake" placeholder="0,00"></div>
       <div class="c2"><label>P/L (R$)</label><input type="number" step="0.01" id="f-pl" placeholder="+ green · − red"></div>
       <div class="c2"><label>Placar (M × V)</label>
@@ -330,28 +345,57 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 
 <!-- ============ CADASTROS ============ -->
 <section id="tab-cadastros" class="tab">
-  <p class="hint" style="margin-bottom:14px">Os cadastros alimentam as sugestões do formulário de entrada e valem para todas as bancas. Excluir um item daqui não altera entradas já registradas.</p>
-  <div class="cadgrid">
-    <div class="panel">
-      <h2>Equipes <span class="cad-count" id="n-equipes"></span></h2>
-      <div class="cad-add"><input id="add-equipes" placeholder="Nome da equipe"><button class="btn sm" onclick="cadAdd('equipes')">Adicionar</button></div>
-      <div class="cad-list" id="list-equipes"></div>
+  <div class="cadwrap">
+    <button class="btn ghost" id="cad-burger">☰ Menu de cadastros</button>
+    <aside class="cad-menu" id="cad-menu">
+      <button class="cad-mi on" data-cad="equipes">Equipes</button>
+      <button class="cad-mi" data-cad="paises">Países</button>
+      <button class="cad-mi" data-cad="campeonatos">Campeonatos</button>
+      <button class="cad-mi" data-cad="mercados">Mercados</button>
+      <button class="cad-mi" data-cad="estrategias">Estratégias</button>
+    </aside>
+    <div class="panel" style="flex:1;margin-bottom:0">
+      <h2 id="cad-title">Equipes <span class="cad-count" id="cad-count"></span></h2>
+      <div class="cad-add">
+        <input id="cad-input" placeholder="Nome">
+        <button class="btn sm" id="cad-addbtn">Adicionar</button>
+        <button class="btn ghost sm" id="cad-imp-toggle">Importar lista</button>
+      </div>
+      <div id="cad-import" style="display:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px">
+        <label>Cole os nomes (um por linha ou separados por vírgula) ou escolha um arquivo .txt/.csv</label>
+        <textarea id="cad-imp-texto" rows="5" style="resize:vertical;margin-bottom:8px" placeholder="Ex.:&#10;Fluminense&#10;Athletico PR&#10;Coritiba"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="file" id="cad-imp-file" accept=".txt,.csv" style="width:auto">
+          <button class="btn sm" id="cad-imp-run">Importar</button>
+          <span class="hint" id="cad-imp-info" style="margin:0"></span>
+        </div>
+      </div>
+      <div class="cad-list" id="cad-listbox" style="max-height:460px"></div>
+      <p class="hint">Os cadastros alimentam as sugestões do formulário de entrada e valem para todas as bancas. Excluir um item daqui não altera entradas já registradas.</p>
     </div>
-    <div class="panel">
-      <h2>Campeonatos <span class="cad-count" id="n-campeonatos"></span></h2>
-      <div class="cad-add"><input id="add-campeonatos" placeholder="Nome do campeonato"><button class="btn sm" onclick="cadAdd('campeonatos')">Adicionar</button></div>
-      <div class="cad-list" id="list-campeonatos"></div>
-    </div>
-    <div class="panel">
-      <h2>Mercados <span class="cad-count" id="n-mercados"></span></h2>
-      <div class="cad-add"><input id="add-mercados" placeholder="Nome do mercado"><button class="btn sm" onclick="cadAdd('mercados')">Adicionar</button></div>
-      <div class="cad-list" id="list-mercados"></div>
-    </div>
-    <div class="panel">
-      <h2>Estratégias <span class="cad-count" id="n-estrategias"></span></h2>
-      <div class="cad-add"><input id="add-estrategias" placeholder="Nome da estratégia"><button class="btn sm" onclick="cadAdd('estrategias')">Adicionar</button></div>
-      <div class="cad-list" id="list-estrategias"></div>
-    </div>
+  </div>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section id="tab-dashboard" class="tab">
+  <div class="filters">
+    <div><label>Período</label><select id="d-mes"></select></div>
+    <div><label>Ano</label><select id="d-ano"></select></div>
+  </div>
+  <div class="panel">
+    <h2>Resumo por país</h2>
+    <table><thead><tr><th>País</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Profit / Loss</th></tr></thead>
+    <tbody id="dash-pais"></tbody></table>
+  </div>
+  <div class="panel" style="overflow-x:auto">
+    <h2>Mercados por país</h2>
+    <table><thead><tr><th>Mercado</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Profit / Loss</th></tr></thead>
+    <tbody id="dash-merc"></tbody></table>
+  </div>
+  <div class="panel" style="overflow-x:auto">
+    <h2>Competições por país</h2>
+    <table><thead><tr><th>Competição</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Profit / Loss</th></tr></thead>
+    <tbody id="dash-comp"></tbody></table>
   </div>
 </section>
 
@@ -403,13 +447,14 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 <div id="toast"></div>
 
 <datalist id="dl-comp"></datalist>
+<datalist id="dl-pais"></datalist>
 <datalist id="dl-times"></datalist>
 <datalist id="dl-forma"></datalist>
 <datalist id="dl-merc"></datalist>
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v3";
+const APP_VERSAO = "v4";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -419,9 +464,23 @@ const SEED = {
   estrategias: ["Back - Super Favorito","Lay - Super Favorito","Back - Favorito","Lay - Favorito","Back - Não Favorito","Lay - Não Favorito","Back - Jogo Parelho","Lay - Jogo Parelho","Over Limite","Over a Frente","Under Limite","Under a Frente","Back Correct Score","Lay Correct Score","Lay 1x0","Lay 0x1","Lay Zebra","Lay - Goleada","Lay Goleada Mandante","Lay Goleada Visitante","Vovô"],
   mercados: ["Match Odds","Intervalo","Over e Under 0.5 HT","Over e Under 1.5 HT","Over e Under 2.5 HT","Over e Under 0.5","Over e Under 1.5","Over e Under 2.5","Over e Under 3.5","Over e Under 4.5","Over e Under 5.5","Resultado do Jogo","Resultado ao Intervalo","Handicap","Ambas Marcam","Empate Anula a Aposta","Chance Dupla","Placar Correto"],
   campeonatos: ["Brasileiro - Série A","Brasileiro - Série B","Copa do Brasil","Estaduais","Premier League","Championship","La Liga","La Liga 2","Serie A (Itália)","Bundesliga 1","Bundesliga 2","Ligue 1","Primeira Liga","Eredivisie","Champions League","Europa League","Copa Libertadores","Copa Sulamericana","MLS","Campeonato Argentino","Super Lig","Allsvenskan","Copa do Rei","Copa da Inglaterra","Copa da Liga","DFB Pokal","Amistosos","NBA"],
-  equipes: ["Flamengo","Palmeiras","Corinthians","São Paulo","Santos","Botafogo","Vasco","Grêmio","Internacional","Atlético MG","Cruzeiro","Bahia","Fortaleza","Ceará","Sport","Mirassol","Liverpool","Man City","Man Utd","Arsenal","Chelsea","Tottenham","Newcastle","West Ham","Everton","Fulham","Brentford","Brighton","Wolverhampton","Nottingham","Bournemouth","Real Madrid","Barcelona","Atl Madrid","Sevilla","Betis","Real Sociedad","Bilbao","Alavés","Oviedo","AC Milan","Inter Milan","Juventus","Napoli","Roma","Lazio","Atalanta","Fiorentina","Genoa","Sassuolo","Bayern Munich","Dortmund","RB Leipzig","Bayer 04","Koln","Frankfurt","Paris St-G","Monaco","Lyon","Marseille","Nice","Porto","Benfica","Sporting","Braga","Ajax","PSV","Feyenoord","Celtic","Rangers","Galatasaray","Fenerbahce","Besiktas"]
+  equipes: ["Flamengo","Palmeiras","Corinthians","São Paulo","Santos","Botafogo","Vasco","Grêmio","Internacional","Atlético MG","Cruzeiro","Bahia","Fortaleza","Ceará","Sport","Mirassol","Liverpool","Man City","Man Utd","Arsenal","Chelsea","Tottenham","Newcastle","West Ham","Everton","Fulham","Brentford","Brighton","Wolverhampton","Nottingham","Bournemouth","Real Madrid","Barcelona","Atl Madrid","Sevilla","Betis","Real Sociedad","Bilbao","Alavés","Oviedo","AC Milan","Inter Milan","Juventus","Napoli","Roma","Lazio","Atalanta","Fiorentina","Genoa","Sassuolo","Bayern Munich","Dortmund","RB Leipzig","Bayer 04","Koln","Frankfurt","Paris St-G","Monaco","Lyon","Marseille","Nice","Porto","Benfica","Sporting","Braga","Ajax","PSV","Feyenoord","Celtic","Rangers","Galatasaray","Fenerbahce","Besiktas"],
+  paises: ["Brasil","Inglaterra","Espanha","Itália","Alemanha","França","Portugal","Holanda","Argentina","EUA","Turquia","Suécia","Rússia","Escócia","Bélgica","Grécia","México","Arábia Saudita","Japão","Coreia do Sul","América do Sul","Europa","Mundo"]
 };
-const CAD_TABLES = { equipes:"cad_equipes", campeonatos:"cad_campeonatos", mercados:"cad_mercados", estrategias:"cad_estrategias" };
+const COMP_PAIS = {
+  "Brasileiro - Série A":"Brasil","Brasileiro - Série B":"Brasil","Copa do Brasil":"Brasil","Estaduais":"Brasil",
+  "Premier League":"Inglaterra","Championship":"Inglaterra","Copa da Inglaterra":"Inglaterra","Copa da Liga":"Inglaterra",
+  "La Liga":"Espanha","La Liga 2":"Espanha","Copa do Rei":"Espanha",
+  "Serie A (Itália)":"Itália",
+  "Bundesliga 1":"Alemanha","Bundesliga 2":"Alemanha","DFB Pokal":"Alemanha",
+  "Ligue 1":"França","Primeira Liga":"Portugal","Eredivisie":"Holanda",
+  "Champions League":"Europa","Europa League":"Europa",
+  "Copa Libertadores":"América do Sul","Copa Sulamericana":"América do Sul",
+  "MLS":"EUA","NBA":"EUA","Campeonato Argentino":"Argentina","Super Lig":"Turquia","Allsvenskan":"Suécia","Amistosos":"Mundo"
+};
+const CAD_TABLES = { equipes:"cad_equipes", paises:"cad_paises", campeonatos:"cad_campeonatos", mercados:"cad_mercados", estrategias:"cad_estrategias" };
+const CAD_LABELS = { equipes:"Equipes", paises:"Países", campeonatos:"Campeonatos", mercados:"Mercados", estrategias:"Estratégias" };
+const CAD_PLACEHOLDER = { equipes:"Nome da equipe", paises:"Nome do país", campeonatos:"Nome do campeonato", mercados:"Nome do mercado", estrategias:"Nome da estratégia" };
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
 /* ============ Estado ============ */
@@ -429,7 +488,8 @@ let user = null;
 let bancas = [];
 let bancaId = null;
 let db = { bets:[], movs:[] };
-let cad = { equipes:[], campeonatos:[], mercados:[], estrategias:[] };
+let cad = { equipes:[], paises:[], campeonatos:[], mercados:[], estrategias:[] };
+let cadKey = "equipes";
 
 /* ============ Utilidades ============ */
 const $ = id => document.getElementById(id);
@@ -637,21 +697,32 @@ async function loadCadastros(){
         data = ins.data || [];
       }
       cad[key] = (data||[]).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
-    }catch(e){ sbErr(e,"carregar cadastro de "+key); cad[key]=[]; }
+    }catch(e){ sbErr(e,"carregar cadastro de "+CAD_LABELS[key]); cad[key]=[]; }
   }
   renderCadastros();
 }
 function renderCadastros(){
-  for(const key of Object.keys(CAD_TABLES)){
-    $("n-"+key).textContent = `· ${cad[key].length}`;
-    $("list-"+key).innerHTML = cad[key].length? cad[key].map(item=>
-      `<div class="cad-item"><span>${esc(item.nome)}</span>
-        <button class="x" title="Excluir" onclick="cadDel('${key}','${item.id}')">✕</button></div>`).join("")
-      : `<div class="empty">Nenhum item cadastrado.</div>`;
-  }
+  document.querySelectorAll(".cad-mi").forEach(b=> b.classList.toggle("on", b.dataset.cad===cadKey));
+  $("cad-title").innerHTML = `${CAD_LABELS[cadKey]} <span class="cad-count" id="cad-count">· ${cad[cadKey].length}</span>`;
+  $("cad-input").placeholder = CAD_PLACEHOLDER[cadKey];
+  $("cad-listbox").innerHTML = cad[cadKey].length? cad[cadKey].map(item=>
+    `<div class="cad-item"><span>${esc(item.nome)}</span>
+      <button class="x" title="Excluir" onclick="cadDel('${cadKey}','${item.id}')">✕</button></div>`).join("")
+    : `<div class="empty">Nenhum item cadastrado.</div>`;
 }
+document.querySelectorAll(".cad-mi").forEach(btn=>{
+  btn.onclick = ()=>{
+    cadKey = btn.dataset.cad;
+    $("cad-import").style.display="none";
+    $("cad-menu").classList.remove("open");
+    renderCadastros();
+  };
+});
+$("cad-burger").onclick = ()=> $("cad-menu").classList.toggle("open");
+$("cad-addbtn").onclick = ()=> cadAdd(cadKey);
+$("cad-input").addEventListener("keydown", e=>{ if(e.key==="Enter") cadAdd(cadKey); });
 window.cadAdd = async key=>{
-  const inp = $("add-"+key);
+  const inp = $("cad-input");
   const nome = inp.value.trim();
   if(!nome){ toast("Digite o nome.", true); return; }
   if(cad[key].some(i=>i.nome.toLowerCase()===nome.toLowerCase())){ toast("Este item já está cadastrado.", true); return; }
@@ -672,9 +743,44 @@ window.cadDel = async (key,id)=>{
   toast("Excluído do cadastro.");
   renderCadastros(); fillDatalists();
 };
-["equipes","campeonatos","mercados","estrategias"].forEach(key=>{
-  $("add-"+key).addEventListener("keydown", e=>{ if(e.key==="Enter") cadAdd(key); });
-});
+
+/* --- Importação em lote --- */
+$("cad-imp-toggle").onclick = ()=>{
+  const box = $("cad-import");
+  box.style.display = box.style.display==="none"? "block":"none";
+  $("cad-imp-info").textContent="";
+};
+$("cad-imp-file").onchange = e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ $("cad-imp-texto").value = r.result; };
+  r.readAsText(f);
+};
+$("cad-imp-run").onclick = async ()=>{
+  const texto = $("cad-imp-texto").value;
+  const nomes = [...new Set(
+    texto.split(/[\n;,]+/).map(s=>s.trim()).filter(s=>s && s.length<=80)
+  )];
+  if(!nomes.length){ toast("Nada para importar — cole os nomes primeiro.", true); return; }
+  const existentes = new Set(cad[cadKey].map(i=>i.nome.toLowerCase()));
+  const novos = nomes.filter(n=>!existentes.has(n.toLowerCase()));
+  if(!novos.length){ $("cad-imp-info").textContent="Todos os itens já estavam cadastrados."; return; }
+  $("cad-imp-run").disabled=true;
+  try{
+    const rows = novos.map(nome=>({ user_id:user.id, nome }));
+    for(let i=0;i<rows.length;i+=200){
+      const { data, error } = await sb.from(CAD_TABLES[cadKey]).upsert(rows.slice(i,i+200), { onConflict:"user_id,nome", ignoreDuplicates:true }).select();
+      if(error) throw error;
+      (data||[]).forEach(d=>cad[cadKey].push(d));
+    }
+    cad[cadKey].sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+    $("cad-imp-texto").value=""; $("cad-imp-file").value="";
+    $("cad-imp-info").textContent=`${novos.length} item(ns) importado(s).`;
+    toast(`${novos.length} item(ns) importado(s) em ${CAD_LABELS[cadKey]}.`);
+    renderCadastros(); fillDatalists();
+  }catch(e){ sbErr(e,"importar a lista"); }
+  $("cad-imp-run").disabled=false;
+};
 
 /* ============ Navegação ============ */
 document.querySelectorAll("nav button").forEach(btn=>{
@@ -794,13 +900,20 @@ function fillDatalists(){
     $(id).innerHTML=[...s].sort((a,b)=>a.localeCompare(b,"pt")).map(v=>`<option value="${esc(v)}">`).join("");
   };
   set("dl-comp","campeonatos", db.bets.map(b=>b.comp));
+  set("dl-pais","paises", db.bets.map(b=>b.pais));
   set("dl-times","equipes", db.bets.flatMap(b=>[b.mand,b.vis]));
   set("dl-forma","estrategias", db.bets.map(b=>b.forma));
   set("dl-merc","mercados", db.bets.map(b=>b.mercado));
 }
+/* preenche o país automaticamente quando a competição é conhecida */
+document.addEventListener("DOMContentLoaded", ()=>{});
+$("f-comp").addEventListener("change", ()=>{
+  const comp = $("f-comp").value.trim();
+  if(!$("f-pais").value.trim() && COMP_PAIS[comp]) $("f-pais").value = COMP_PAIS[comp];
+});
 function fillMesAnoSelects(){
   const anos = anosDisponiveis();
-  ["e","a"].forEach(px=>{
+  ["e","a","d"].forEach(px=>{
     const sm=$(px+"-mes"), sa=$(px+"-ano");
     const vm=sm.value, va=sa.value;
     sm.innerHTML = `<option value="all">Todos os meses</option>` + MESES.map((n,i)=>`<option value="${i+1}">${n}</option>`).join("");
@@ -819,7 +932,7 @@ function renderEntradas(){
   $("f-banca").textContent = banca().nome;
   const q = $("e-busca").value.trim().toLowerCase();
   let list = filteredBets("e");
-  if(q) list = list.filter(b=> [b.comp,b.mand,b.vis,b.forma,b.mercado,b.obs].join(" ").toLowerCase().includes(q));
+  if(q) list = list.filter(b=> [b.comp,b.pais,b.mand,b.vis,b.forma,b.mercado,b.obs].join(" ").toLowerCase().includes(q));
 
   const g=list.filter(b=>+b.pl>0).length, r=list.filter(b=>+b.pl<0).length;
   const pl=plOf(list), st=stakeOf(list);
@@ -837,7 +950,7 @@ function renderEntradas(){
     const roi = +b.stake? (+b.pl)/(+b.stake) : null;
     return `<tr class="${+b.pl>0?"g":(+b.pl<0?"r":"")}">
       <td class="mono">${dBR(b.data)}</td>
-      <td>${esc(b.comp)||"—"}</td>
+      <td>${esc(b.comp)||"—"}${b.pais?`<div style="font-size:11px;color:var(--dim)">${esc(b.pais)}</div>`:""}</td>
       <td><b>${esc(b.mand)}</b> ${b.gm!==null&&b.gm!==undefined?`<span class="mono">${b.gm}×${b.gv}</span>`:"×"} <b>${esc(b.vis)}</b>
           ${b.obs?`<div style="font-size:11.5px;color:var(--dim)">${esc(b.obs)}</div>`:""}</td>
       <td><span class="chip ${isLay?"lay":"back"}">${esc(b.forma)||"—"}</span></td>
@@ -853,7 +966,7 @@ function renderEntradas(){
   : `<tr><td colspan="10" class="empty">Nenhuma entrada neste período.</td></tr>`;
 }
 function clearForm(){
-  ["f-comp","f-mand","f-vis","f-forma","f-merc","f-stake","f-pl","f-gm","f-gv","f-obs"].forEach(id=>$(id).value="");
+  ["f-comp","f-pais","f-mand","f-vis","f-forma","f-merc","f-stake","f-pl","f-gm","f-gv","f-obs"].forEach(id=>$(id).value="");
   $("f-data").value = new Date().toISOString().slice(0,10);
   $("f-tipo").value = "Pré Live";
   editId=null;
@@ -866,6 +979,7 @@ window.editBet = id=>{
   editId=id;
   $("f-data").value=b.data;
   $("f-comp").value=b.comp||"";
+  $("f-pais").value=b.pais||"";
   $("f-tipo").value=b.tipo||"Pré Live";
   $("f-mand").value=b.mand||"";
   $("f-vis").value=b.vis||"";
@@ -898,7 +1012,7 @@ $("f-save").onclick = async ()=>{
   if(g("f-pl")===""){ toast("Informe o P/L (valor negativo para red).", true); return; }
   const row={
     user_id:user.id, banca_id:bancaId, data,
-    comp:g("f-comp"), tipo:g("f-tipo"),
+    comp:g("f-comp"), pais:g("f-pais"), tipo:g("f-tipo"),
     mand:g("f-mand"), vis:g("f-vis"), forma:g("f-forma"), mercado:g("f-merc"),
     stake:+g("f-stake")||0, pl:+g("f-pl")||0,
     gm:g("f-gm")===""?null:+g("f-gm"), gv:g("f-gv")===""?null:+g("f-gv"),
@@ -971,6 +1085,51 @@ function renderAnalises(){
 }
 ["a-mes","a-ano"].forEach(id=> $(id).onchange = renderAnalises);
 
+/* ============ Dashboard ============ */
+function renderDashboard(){
+  const list = filteredBets("d");
+  const paisDe = b => (b.pais||"").trim() || "Sem país";
+
+  /* 1. Resumo por país */
+  const porPais = agrupa(list, paisDe).sort((a,b)=>b[1].pl-a[1].pl);
+  const totG = list.filter(b=>+b.pl>0).length, totR = list.filter(b=>+b.pl<0).length, totPl = plOf(list);
+  $("dash-pais").innerHTML = porPais.length? porPais.map(([nome,o])=>
+    `<tr><td>${esc(nome)}</td><td class="num">${o.n}</td>
+      <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("")
+    + `<tr class="subt"><td>TOTAL GERAL</td><td class="num">${list.length}</td>
+        <td class="num pos">${totG}</td><td class="num neg">${totR}</td>
+        <td class="num ${cls(totPl)}">${(totPl>0?"+":"")+fmt(totPl)}</td></tr>`
+    : `<tr><td colspan="5" class="empty">Sem entradas no período — registre entradas com o campo País preenchido.</td></tr>`;
+
+  /* 2 e 3. Agrupamentos aninhados: país → mercado / país → competição */
+  const nested = innerFn=>{
+    if(!list.length) return `<tr><td colspan="5" class="empty">Sem entradas no período.</td></tr>`;
+    const grupos = new Map();
+    list.forEach(b=>{
+      const p = paisDe(b);
+      if(!grupos.has(p)) grupos.set(p, []);
+      grupos.get(p).push(b);
+    });
+    const ordem = [...grupos.entries()].sort((a,b)=> plOf(b[1]) - plOf(a[1]));
+    return ordem.map(([pais, betsP])=>{
+      const linhas = agrupa(betsP, innerFn).sort((a,b)=>b[1].pl-a[1].pl).map(([nome,o])=>
+        `<tr><td style="padding-left:22px">${esc(nome)||"—"}</td><td class="num">${o.n}</td>
+          <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+          <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("");
+      const g=betsP.filter(b=>+b.pl>0).length, r=betsP.filter(b=>+b.pl<0).length, pl=plOf(betsP);
+      return `<tr class="grp"><td colspan="5">${esc(pais)}</td></tr>`
+        + linhas
+        + `<tr class="subt"><td style="padding-left:22px">Total ${esc(pais)}</td><td class="num">${betsP.length}</td>
+            <td class="num pos">${g}</td><td class="num neg">${r}</td>
+            <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
+    }).join("");
+  };
+  $("dash-merc").innerHTML = nested(b=> b.mercado || "Sem mercado");
+  $("dash-comp").innerHTML = nested(b=> b.comp || "Sem competição");
+}
+["d-mes","d-ano"].forEach(id=> $(id).onchange = renderDashboard);
+
 /* ============ Config ============ */
 function renderConfig(){
   const b = banca();
@@ -1041,7 +1200,7 @@ $("io-file").onchange = e=>{
       await sb.from("banca_bets").delete().eq("user_id", user.id).eq("banca_id", bancaId);
       await sb.from("banca_movs").delete().eq("user_id", user.id).eq("banca_id", bancaId);
       const bets = d.bets.map(b=>({
-        user_id:user.id, banca_id:bancaId, data:b.data, comp:b.comp||"", tipo:b.tipo||"Pré Live",
+        user_id:user.id, banca_id:bancaId, data:b.data, comp:b.comp||"", pais:b.pais||"", tipo:b.tipo||"Pré Live",
         mand:b.mand||"", vis:b.vis||"", forma:b.forma||"", mercado:b.mercado||"",
         stake:+b.stake||0, pl:+b.pl||0,
         gm:(b.gm===""||b.gm==null)?null:+b.gm, gv:(b.gv===""||b.gv==null)?null:+b.gv,
@@ -1081,7 +1240,7 @@ $("io-wipe").onclick = async ()=>{
 };
 
 /* ============ Boot ============ */
-function renderAll(){ renderPainel(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); }
+function renderAll(){ renderPainel(); renderDashboard(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); }
 $("s-versao").textContent = APP_VERSAO;
 document.querySelector(".login-card p.sub").insertAdjacentHTML("beforeend", ` <span class="mono" style="color:var(--dim);font-size:11px">· ${APP_VERSAO}</span>`);
 clearForm();
