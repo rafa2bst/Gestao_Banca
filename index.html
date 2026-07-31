@@ -192,7 +192,7 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
     <button data-tab="cadastros">Cadastros</button>
     <button data-tab="config">Configuração</button>
   </nav>
-  <div class="session"><span id="s-email"></span><button id="s-sair">Sair</button></div>
+  <div class="session"><span id="s-versao" class="mono" style="color:var(--dim)"></span><span id="s-email"></span><button id="s-sair">Sair</button></div>
 </header>
 
 <main>
@@ -409,6 +409,7 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
+const APP_VERSAO = "v3";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1081,6 +1082,8 @@ $("io-wipe").onclick = async ()=>{
 
 /* ============ Boot ============ */
 function renderAll(){ renderPainel(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); }
+$("s-versao").textContent = APP_VERSAO;
+document.querySelector(".login-card p.sub").insertAdjacentHTML("beforeend", ` <span class="mono" style="color:var(--dim);font-size:11px">· ${APP_VERSAO}</span>`);
 clearForm();
 $("m-data").value = new Date().toISOString().slice(0,10);
 boot();
