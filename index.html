@@ -136,13 +136,13 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 .cad-item .x:hover{color:var(--red);background:var(--red-soft)}
 .cad-count{font-size:11px;color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none;margin-left:6px}
 
-/* ---------- Modal nova banca ---------- */
-dialog{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:26px;max-width:400px;width:92%}
-dialog::backdrop{background:rgba(4,8,12,.72)}
-dialog h3{margin-bottom:4px;font-size:17px;font-weight:800}
-dialog p.sub{color:var(--mut);font-size:13px;margin-bottom:18px}
-dialog .field{margin-bottom:13px}
-dialog .dactions{display:flex;gap:10px;margin-top:18px}
+/* ---------- Aba Banca ---------- */
+.bcard{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:var(--panel2)}
+.bcard.ativa{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+.bcard .bn{font-weight:800;font-size:15.5px}
+.bcard .bi{font-size:12px;color:var(--dim);margin-top:3px}
+.bcard .bs{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;text-align:right}
+.bcard .badge{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
 
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:10px 18px;border-radius:8px;font-size:13.5px;display:none;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 #toast.err{border-color:var(--red);color:var(--red)}
@@ -185,6 +185,7 @@ dialog .dactions{display:flex;gap:10px;margin-top:18px}
     <select id="b-sel" title="Banca ativa"></select>
   </div>
   <nav>
+    <button data-tab="banca">Banca</button>
     <button data-tab="painel" class="on">Painel</button>
     <button data-tab="entradas">Entradas</button>
     <button data-tab="analises">Análises</button>
@@ -195,6 +196,24 @@ dialog .dactions{display:flex;gap:10px;margin-top:18px}
 </header>
 
 <main>
+
+<!-- ============ BANCA ============ -->
+<section id="tab-banca" class="tab">
+  <div class="grid2" style="grid-template-columns:1.4fr 1fr;align-items:start">
+    <div class="panel">
+      <h2>Minhas bancas</h2>
+      <div id="b-cards"></div>
+    </div>
+    <div class="panel">
+      <h2>Criar nova banca</h2>
+      <div class="field" style="margin-bottom:13px"><label>Nome da banca</label><input id="nb-nome" placeholder="Ex.: Banca Talita"></div>
+      <div class="field" style="margin-bottom:13px"><label>Banca inicial (R$)</label><input type="number" step="0.01" id="nb-inicial" value="300"></div>
+      <div class="field" style="margin-bottom:13px"><label>Gestão · % da banca por stake</label><input type="number" step="0.1" id="nb-gestao" value="2"></div>
+      <button class="btn" id="nb-criar">Criar banca</button>
+      <p class="hint">Cada banca funciona como uma planilha separada: tem suas próprias entradas, levantamentos, análises e gestão.</p>
+    </div>
+  </div>
+</section>
 
 <section id="tab-painel" class="tab on">
   <div class="hero">
@@ -381,19 +400,6 @@ dialog .dactions{display:flex;gap:10px;margin-top:18px}
 </main>
 </div>
 
-<!-- ============ MODAL NOVA BANCA ============ -->
-<dialog id="dlg-banca">
-  <h3>Nova banca</h3>
-  <p class="sub">Crie uma banca separada, com suas próprias entradas e gestão.</p>
-  <div class="field"><label>Nome da banca</label><input id="nb-nome" placeholder="Ex.: Banca Talita"></div>
-  <div class="field"><label>Banca inicial (R$)</label><input type="number" step="0.01" id="nb-inicial" value="300"></div>
-  <div class="field"><label>Gestão · % da banca por stake</label><input type="number" step="0.1" id="nb-gestao" value="2"></div>
-  <div class="dactions">
-    <button class="btn" id="nb-criar">Criar banca</button>
-    <button class="btn ghost" id="nb-cancelar">Cancelar</button>
-  </div>
-</dialog>
-
 <div id="toast"></div>
 
 <datalist id="dl-comp"></datalist>
@@ -474,12 +480,19 @@ async function entrar(u){
   if(!bancas.length){
     $("loading").style.display="none";
     $("app").style.display="block";
-    abrirModalBanca(true);
+    irParaAba("banca");
+    renderBancaTab();
+    toast("Crie sua primeira banca para começar.");
   } else {
     const salvo = localStorage.getItem("banca_ativa_"+u.id);
     bancaId = bancas.some(b=>b.id===salvo)? salvo : bancas[0].id;
     await selecionarBanca(bancaId, true);
   }
+}
+function irParaAba(nome){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on", b.dataset.tab===nome));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
+  $("tab-"+nome).classList.add("on");
 }
 $("l-entrar").onclick = async ()=>{
   const email=$("l-email").value.trim(), senha=$("l-senha").value;
@@ -513,7 +526,7 @@ function renderBancaSel(){
   if(bancaId) sel.value = bancaId;
 }
 $("b-sel").onchange = async e=>{
-  if(e.target.value==="__nova"){ e.target.value = bancaId||""; abrirModalBanca(false); return; }
+  if(e.target.value==="__nova"){ e.target.value = bancaId||""; irParaAba("banca"); refreshResumo(); $("nb-nome").focus(); return; }
   await selecionarBanca(e.target.value, false);
 };
 async function selecionarBanca(id, primeiro){
@@ -539,27 +552,64 @@ async function loadBancaData(){
     db.movs = data||[];
   }catch(e){ sbErr(e,"carregar movimentações"); db.movs=[]; }
 }
-function abrirModalBanca(obrigatorio){
-  $("nb-nome").value=""; $("nb-inicial").value="300"; $("nb-gestao").value="2";
-  $("nb-cancelar").style.display = obrigatorio? "none":"inline-block";
-  $("dlg-banca").showModal();
-  $("nb-nome").focus();
+
+/* ---- Aba Banca: resumo de todas as bancas + criação ---- */
+let resumo = {};
+async function refreshResumo(){
+  try{
+    const [b,m] = await Promise.all([
+      sb.from("banca_bets").select("banca_id,pl").eq("user_id",user.id).limit(20000),
+      sb.from("banca_movs").select("banca_id,tipo,valor").eq("user_id",user.id).limit(20000)
+    ]);
+    resumo = {};
+    (b.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.pl+= +r.pl||0; o.n++; });
+    (m.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.mov+= r.tipo==="aporte"? +r.valor : -r.valor; });
+  }catch(e){ console.error(e); }
+  renderBancaTab();
 }
-$("nb-cancelar").onclick = ()=> $("dlg-banca").close();
+function renderBancaTab(){
+  const box = $("b-cards");
+  if(!bancas.length){
+    box.innerHTML = `<div class="empty">Nenhuma banca ainda — crie a primeira ao lado.</div>`;
+    return;
+  }
+  box.innerHTML = bancas.map(b=>{
+    const r = resumo[b.id] || {pl:0,mov:0,n:0};
+    const saldo = (+b.inicial||0) + r.pl + r.mov;
+    const ativa = b.id===bancaId;
+    return `<div class="bcard ${ativa?"ativa":""}">
+      <div>
+        <div class="bn">${esc(b.nome)} ${ativa?'<span class="badge">· ativa</span>':""}</div>
+        <div class="bi">Inicial ${fmt(+b.inicial||0)} · Gestão ${b.gestao}% · ${r.n} entrada${r.n===1?"":"s"}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="bs ${cls(r.pl)}">${fmt(saldo)}</div>
+        ${ativa? "" : `<button class="btn ghost sm" onclick="usarBanca('${b.id}')">Selecionar</button>`}
+      </div>
+    </div>`;
+  }).join("");
+}
+window.usarBanca = async id=>{
+  await selecionarBanca(id, false);
+  irParaAba("painel");
+  toast(`Banca "${banca().nome}" selecionada.`);
+};
 $("nb-criar").onclick = async ()=>{
   const nome = $("nb-nome").value.trim();
   if(!nome){ toast("Dê um nome à banca.", true); return; }
+  if(bancas.some(b=>b.nome.toLowerCase()===nome.toLowerCase())){ toast("Já existe uma banca com este nome.", true); return; }
   $("nb-criar").disabled=true;
   const row = { user_id:user.id, nome, inicial:+$("nb-inicial").value||0, gestao:+$("nb-gestao").value||0 };
   const { data, error } = await sb.from("bancas").insert(row).select().single();
   $("nb-criar").disabled=false;
   if(error) return sbErr(error,"criar a banca");
   bancas.push(data);
-  $("dlg-banca").close();
-  toast(`Banca "${nome}" criada.`);
+  $("nb-nome").value=""; $("nb-inicial").value="300"; $("nb-gestao").value="2";
+  toast(`Banca "${nome}" criada e selecionada.`);
   await selecionarBanca(data.id, false);
+  irParaAba("painel");
 };
-$("b-nova").onclick = ()=> abrirModalBanca(false);
+$("b-nova").onclick = ()=>{ irParaAba("banca"); refreshResumo(); $("nb-nome").focus(); };
 $("b-excluir").onclick = async ()=>{
   if(bancas.length<=1){ toast("Você precisa ter pelo menos uma banca.", true); return; }
   const b = banca();
@@ -628,11 +678,9 @@ window.cadDel = async (key,id)=>{
 /* ============ Navegação ============ */
 document.querySelectorAll("nav button").forEach(btn=>{
   btn.onclick = ()=>{
-    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
-    btn.classList.add("on");
-    $("tab-"+btn.dataset.tab).classList.add("on");
-    renderAll();
+    irParaAba(btn.dataset.tab);
+    if(btn.dataset.tab==="banca"){ renderBancaTab(); refreshResumo(); }
+    else renderAll();
   };
 });
 
@@ -1032,7 +1080,7 @@ $("io-wipe").onclick = async ()=>{
 };
 
 /* ============ Boot ============ */
-function renderAll(){ renderPainel(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); }
+function renderAll(){ renderPainel(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); }
 clearForm();
 $("m-data").value = new Date().toISOString().slice(0,10);
 boot();
