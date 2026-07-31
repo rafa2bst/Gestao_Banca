@@ -604,12 +604,19 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
   </div>
   <div class="panel" id="imp-panel" style="display:none">
     <h2>Importar apostas de planilha</h2>
-    <p class="hint" style="margin-bottom:12px">Use a planilha-modelo com as colunas: <b>Data · Evento · País · Liga · Mercado · Operação · Tipo · Odd · Stake · Resultado · Placar · Observação</b>. Aceita .xlsx ou .csv. As apostas serão <b>adicionadas</b> às existentes desta banca — não importe o mesmo arquivo duas vezes.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <p class="hint" style="margin-bottom:12px">Formatos aceitos: <b>FulltBet</b> (abas mensais Jan–Dez), <b>Operações da Bolsa</b> (export com Odds Back/Lay) e a <b>planilha-modelo</b>. Aceita .xlsx ou .csv. As apostas serão <b>adicionadas</b> às existentes desta banca — não importe o mesmo arquivo duas vezes.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+      <div style="min-width:230px"><label>Formato da planilha</label>
+        <select id="imp-modo">
+          <option value="auto">Detectar automaticamente</option>
+          <option value="fulltbet">FulltBet (abas Jan–Dez)</option>
+          <option value="operacoes">Operações da Bolsa (export)</option>
+          <option value="modelo">Planilha-modelo</option>
+        </select></div>
       <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="width:auto">
       <button class="btn" id="imp-run" disabled>Importar apostas</button>
-      <span class="hint" id="imp-info" style="margin:0"></span>
     </div>
+    <p class="hint" id="imp-info" style="margin-top:10px"></p>
   </div>
 
   <div class="summary-strip" id="e-strip"></div>
@@ -775,7 +782,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v13";
+const APP_VERSAO = "v14";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1712,15 +1719,16 @@ $("io-wipe").onclick = async ()=>{
 let impLinhas = null;
 const impNorm = t => String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
 const impNum = v => {
-  if(v==null || v==="") return null;
+  if(v==null || v==="" || v==="-") return null;
   if(typeof v==="number") return v;
-  const n = parseFloat(String(v).replace(/r\$\s*/i,"").replace(/\./g, String(v).includes(",")? "" : ".").replace(",","."));
+  const t = String(v).replace(/r\$\s*/i,"");
+  const n = parseFloat(t.replace(/\./g, t.includes(",")? "" : ".").replace(",","."));
   return isNaN(n)? null : n;
 };
 function impData(v){
   if(v==null || v==="") return null;
   if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
-  if(typeof v==="number"){ /* serial do Excel */
+  if(typeof v==="number"){
     const d = new Date(Date.UTC(1899,11,30) + v*86400000);
     return isNaN(d)? null : d.toISOString().slice(0,10);
   }
@@ -1734,28 +1742,154 @@ function impData(v){
   }
   return null;
 }
-const IMP_COLS = {
+function impBase(extra){
+  return Object.assign({ user_id:user.id, banca_id:bancaId, pais:"", comp:"", mercado:"", forma:"",
+    tipo:"Pré Live", odd:null, stake:0, gm:null, gv:null, obs:"" }, extra);
+}
+function impPaisDe(comp){
+  if(!comp) return "";
+  const cc = cad.campeonatos.find(x=>x.nome.toLowerCase()===comp.toLowerCase() && (x.pais||"").trim());
+  return cc? cc.pais : (COMP_PAIS[comp]||"");
+}
+/* --- formato 1: planilha-modelo --- */
+const MODELO_COLS = {
   data:["data"], evento:["evento","jogo","partida"], pais:["pais"],
   comp:["liga","competicao","campeonato"], mercado:["mercado"],
   forma:["operacao","forma","forma de trabalho","estrategia"],
   tipo:["tipo"], odd:["odd","cotacao"], stake:["stake","valor"],
-  pl:["resultado","result","resultado (r$)","p/l","pl","lucro"],
+  pl:["resultado","result","p/l","pl","lucro"],
   placar:["placar"], obs:["observacao","obs","comentario","notas"]
 };
-function impMapHeader(headers){
+function parseModelo(wbk){
+  const ws = wbk.Sheets[wbk.SheetNames.includes("Apostas")? "Apostas" : wbk.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+  if(rows.length<2) return { out:[], erros:[], msg:"planilha vazia" };
   const map = {};
-  headers.forEach((h,idx)=>{
+  rows[0].forEach((h,idx)=>{
     const n = impNorm(h);
-    for(const [campo, aliases] of Object.entries(IMP_COLS)){
+    for(const [campo, aliases] of Object.entries(MODELO_COLS))
       if(map[campo]===undefined && aliases.includes(n)) map[campo]=idx;
-    }
   });
-  return map;
+  if(map.data===undefined || map.evento===undefined || map.pl===undefined)
+    return { out:[], erros:[], msg:"cabeçalho não reconhecido (precisa de Data, Evento e Resultado)" };
+  const out=[], erros=[];
+  rows.slice(1).forEach((l,ix)=>{
+    if(l.every(c=>String(c).trim()==="")) return;
+    const data = impData(l[map.data]);
+    const evento = String(l[map.evento]||"").trim();
+    const pl = impNum(l[map.pl]);
+    if(!data || !evento || pl===null){ erros.push(ix+2); return; }
+    const times = timesDoJogo(evento);
+    const comp = map.comp!==undefined? String(l[map.comp]||"").trim():"";
+    let pais = map.pais!==undefined? String(l[map.pais]||"").trim():"";
+    if(!pais) pais = impPaisDe(comp);
+    let gm=null, gv=null;
+    if(map.placar!==undefined){
+      const pm = String(l[map.placar]||"").match(/^(\d+)\s*[x×\-]\s*(\d+)$/i);
+      if(pm){ gm=+pm[1]; gv=+pm[2]; }
+    }
+    const tipoRaw = map.tipo!==undefined? impNorm(l[map.tipo]) : "";
+    out.push(impBase({
+      data, mand: times[0]||evento, vis: times[1]||"", pais, comp,
+      mercado: map.mercado!==undefined? String(l[map.mercado]||"").trim():"",
+      forma: map.forma!==undefined? String(l[map.forma]||"").trim():"",
+      tipo: tipoRaw.includes("live") && !tipoRaw.includes("pre")? "Live" : "Pré Live",
+      odd: map.odd!==undefined? impNum(l[map.odd]) : null,
+      stake: map.stake!==undefined? (impNum(l[map.stake])||0) : 0,
+      pl, gm, gv,
+      obs: map.obs!==undefined? String(l[map.obs]||"").trim():""
+    }));
+  });
+  return { out, erros, msg:"planilha-modelo" };
+}
+/* --- formato 2: export de operações da bolsa (Odds Back/Lay) --- */
+function parseOperacoes(wbk){
+  const nome = wbk.SheetNames.find(n=>impNorm(n).includes("opera")) || wbk.SheetNames[0];
+  const rows = XLSX.utils.sheet_to_json(wbk.Sheets[nome], { header:1, defval:"" });
+  if(rows.length<2) return { out:[], erros:[], msg:"planilha vazia" };
+  const H = rows[0].map(impNorm);
+  const col = alvo => H.findIndex(h=>h===alvo);
+  const iData=col("data"), iEvento=col("evento"), iMerc=col("mercado"),
+        iBack=col("odds back"), iLay=col("odds lay"), iStake=col("stake"), iPl=col("pl");
+  if(iData<0 || iEvento<0 || iPl<0)
+    return { out:[], erros:[], msg:"cabeçalho não reconhecido (esperado: Data, Evento, Mercado, Odds Back, Odds Lay, Stake, PL)" };
+  const out=[], erros=[];
+  rows.slice(1).forEach((l,ix)=>{
+    if(l.every(c=>String(c).trim()==="")) return;
+    const bruto = String(l[iData]||"").trim();
+    const data = impData(bruto);
+    const evento = String(l[iEvento]||"").trim();
+    const pl = impNum(l[iPl]);
+    if(!data || !evento || pl===null){ erros.push(ix+2); return; }
+    const times = timesDoJogo(evento);
+    const back = iBack>=0? impNum(l[iBack]) : null;
+    const lay = iLay>=0? impNum(l[iLay]) : null;
+    const hora = (bruto.match(/(\d{1,2}h\d{2})/)||[])[1] || "";
+    out.push(impBase({
+      data, mand: times[0]||evento, vis: times[1]||"",
+      mercado: iMerc>=0? String(l[iMerc]||"").trim():"",
+      forma: lay!=null? "Lay" : (back!=null? "Back" : ""),
+      odd: back!=null? back : lay,
+      stake: iStake>=0? (impNum(l[iStake])||0) : 0,
+      pl,
+      obs: ["BOT", hora].filter(Boolean).join(" · ")
+    }));
+  });
+  return { out, erros, msg:"operações da bolsa" };
+}
+/* --- formato 3: FulltBet (abas mensais Jan–Dez) --- */
+const FULLTBET_MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+function parseFulltbet(wbk){
+  const abas = wbk.SheetNames.filter(n=>FULLTBET_MESES.includes(n.trim()));
+  if(!abas.length) return { out:[], erros:[], msg:"nenhuma aba mensal (Jan–Dez) encontrada" };
+  const out=[], erros=[];
+  abas.forEach(nome=>{
+    const rows = XLSX.utils.sheet_to_json(wbk.Sheets[nome], { header:1, defval:"" });
+    let hIdx=-1, H=null;
+    for(let i=0;i<Math.min(rows.length,8);i++){
+      const nrm = rows[i].map(impNorm);
+      if(nrm.includes("mandante") && nrm.includes("visitante")){ hIdx=i; H=nrm; break; }
+    }
+    if(hIdx<0) return;
+    const iMand=H.indexOf("mandante"), iVis=H.indexOf("visitante");
+    /* a coluna Data do lançamento é a última "data" antes de Mandante (a 1ª pertence ao painel diário) */
+    let iData=-1; H.forEach((h,i)=>{ if(h==="data" && i<iMand) iData=i; });
+    const iComp=H.indexOf("competicao"), iForma=H.indexOf("forma de trabalho"),
+          iMerc=H.indexOf("mercado"), iTipo=H.indexOf("tipo"),
+          iStake=H.indexOf("stake"), iPl=H.indexOf("p/l");
+    rows.slice(hIdx+1).forEach((l,ix)=>{
+      const mand = String(l[iMand]||"").trim(), vis = String(l[iVis]||"").trim();
+      if(!mand && !vis) return;
+      const data = iData>=0? impData(l[iData]) : null;
+      const pl = iPl>=0? impNum(l[iPl]) : null;
+      if(!data || pl===null){ erros.push(`${nome}!${hIdx+2+ix}`); return; }
+      const comp = iComp>=0? String(l[iComp]||"").trim():"";
+      const tipoRaw = iTipo>=0? impNorm(l[iTipo]) : "";
+      out.push(impBase({
+        data, mand, vis, comp, pais: impPaisDe(comp),
+        forma: iForma>=0? String(l[iForma]||"").trim():"",
+        mercado: iMerc>=0? String(l[iMerc]||"").trim():"",
+        tipo: tipoRaw.includes("live") && !tipoRaw.includes("pre")? "Live" : "Pré Live",
+        stake: iStake>=0? (impNum(l[iStake])||0) : 0,
+        pl
+      }));
+    });
+  });
+  return { out, erros, msg:`FulltBet (${abas.length} aba${abas.length===1?"":"s"} mensais lidas)` };
+}
+function detectarFormato(wbk){
+  if(wbk.SheetNames.some(n=>FULLTBET_MESES.includes(n.trim()))) return "fulltbet";
+  const ws = wbk.Sheets[wbk.SheetNames[0]];
+  const primeira = XLSX.utils.sheet_to_json(ws, { header:1, range:0, defval:"" })[0]||[];
+  const nrm = primeira.map(impNorm);
+  if(nrm.includes("odds back") || nrm.includes("odds lay")) return "operacoes";
+  return "modelo";
 }
 $("imp-toggle").onclick = ()=>{
   const p=$("imp-panel");
   p.style.display = p.style.display==="none"? "block":"none";
 };
+$("imp-modo").onchange = ()=>{ if($("imp-file").files[0]) $("imp-file").onchange({target:$("imp-file")}); };
 $("imp-file").onchange = e=>{
   const f=e.target.files[0];
   impLinhas=null; $("imp-run").disabled=true; $("imp-info").textContent="";
@@ -1764,54 +1898,16 @@ $("imp-file").onchange = e=>{
   r.onload = ()=>{
     try{
       const wbk = XLSX.read(r.result, { type:"array", cellDates:true });
-      const ws = wbk.Sheets[wbk.SheetNames.includes("Apostas")? "Apostas" : wbk.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
-      if(rows.length<2){ $("imp-info").textContent="A planilha está vazia."; return; }
-      const map = impMapHeader(rows[0]);
-      if(map.data===undefined || map.evento===undefined || map.pl===undefined){
-        $("imp-info").textContent="Cabeçalho não reconhecido — a planilha precisa ter pelo menos as colunas Data, Evento e Resultado.";
-        return;
-      }
-      const out=[], erros=[];
-      rows.slice(1).forEach((linha,ix)=>{
-        const vazio = linha.every(c=>String(c).trim()==="");
-        if(vazio) return;
-        const data = impData(linha[map.data]);
-        const evento = String(linha[map.evento]||"").trim();
-        const pl = impNum(linha[map.pl]);
-        if(!data || !evento || pl===null){ erros.push(ix+2); return; }
-        const times = timesDoJogo(evento);
-        const comp = map.comp!==undefined? String(linha[map.comp]||"").trim():"";
-        let pais = map.pais!==undefined? String(linha[map.pais]||"").trim():"";
-        if(!pais && comp){
-          const cc = cad.campeonatos.find(x=>x.nome.toLowerCase()===comp.toLowerCase() && (x.pais||"").trim());
-          pais = cc? cc.pais : (COMP_PAIS[comp]||"");
-        }
-        let gm=null, gv=null;
-        if(map.placar!==undefined){
-          const pm = String(linha[map.placar]||"").match(/^(\d+)\s*[x×\-]\s*(\d+)$/i);
-          if(pm){ gm=+pm[1]; gv=+pm[2]; }
-        }
-        const tipoRaw = map.tipo!==undefined? impNorm(linha[map.tipo]) : "";
-        out.push({
-          user_id:user.id, banca_id:bancaId, data,
-          mand: times[0]||evento, vis: times[1]||"",
-          pais, comp,
-          mercado: map.mercado!==undefined? String(linha[map.mercado]||"").trim():"",
-          forma: map.forma!==undefined? String(linha[map.forma]||"").trim():"",
-          tipo: tipoRaw.includes("live") && !tipoRaw.includes("pre")? "Live" : "Pré Live",
-          odd: map.odd!==undefined? impNum(linha[map.odd]) : null,
-          stake: map.stake!==undefined? (impNum(linha[map.stake])||0) : 0,
-          pl, gm, gv,
-          obs: map.obs!==undefined? String(linha[map.obs]||"").trim():""
-        });
-      });
-      impLinhas = out;
-      $("imp-info").textContent = `${out.length} aposta(s) prontas para importar` + (erros.length? ` · ${erros.length} linha(s) ignoradas (dados obrigatórios faltando): ${erros.slice(0,8).join(", ")}${erros.length>8?"…":""}` : "");
-      $("imp-run").disabled = !out.length;
+      let modo = $("imp-modo").value;
+      if(modo==="auto") modo = detectarFormato(wbk);
+      const res = modo==="fulltbet"? parseFulltbet(wbk) : modo==="operacoes"? parseOperacoes(wbk) : parseModelo(wbk);
+      impLinhas = res.out;
+      $("imp-info").textContent = `Formato: ${res.msg} · ${res.out.length} aposta(s) prontas para importar`
+        + (res.erros.length? ` · ${res.erros.length} linha(s) ignoradas: ${res.erros.slice(0,8).join(", ")}${res.erros.length>8?"…":""}` : "");
+      $("imp-run").disabled = !res.out.length;
     }catch(err){
       console.error(err);
-      $("imp-info").textContent = "Não consegui ler o arquivo — confira se é a planilha-modelo (.xlsx ou .csv).";
+      $("imp-info").textContent = "Não consegui ler o arquivo — confira o formato (.xlsx ou .csv).";
     }
   };
   r.readAsArrayBuffer(f);
