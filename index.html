@@ -319,14 +319,30 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div class="panel">
       <h2 id="cy-f-title">Registrar jogo</h2>
       <div class="formgrid">
-        <div class="c3"><label>Jogo</label><input id="cy-jogo" placeholder="Ex.: Real Madrid × Barcelona"></div>
-        <div class="c3"><label>Estratégia</label><input list="dl-estr-ciclos" id="cy-estr" placeholder="Ex.: Lay Favorito 1º Tempo"></div>
+        <div class="c2"><label>Data</label><input type="date" id="cy-data"></div>
+        <div class="c2"><label>Jogo</label><input id="cy-jogo" placeholder="Ex.: Real Madrid × Barcelona"></div>
+        <div class="c2"><label>Estratégia</label><input list="dl-estr-ciclos" id="cy-estr" placeholder="Ex.: Lay Favorito 1º Tempo"></div>
         <div class="c2"><label>Lucro (R$)</label><input type="number" step="0.01" id="cy-lucro" placeholder="+ green · − red"></div>
         <div class="c4"><label>Análise</label><input id="cy-analise" placeholder="Anotações do jogo…"></div>
-        <div class="c6" style="display:flex;gap:10px">
+        <div class="c6" style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn" id="cy-save">Registrar jogo</button>
           <button class="btn ghost" id="cy-cancel" style="display:none">Cancelar edição</button>
+          <button class="btn ghost" id="cyi-toggle">📥 Importar planilha</button>
         </div>
+      </div>
+      <div id="cyi-panel" style="display:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-top:14px">
+        <p class="hint" style="margin-bottom:10px">Formatos: <b>Operações da Bolsa</b> (os jogos entram no <b>ciclo ativo</b>, na ordem das datas) e a <b>planilha do Método de Ciclos</b> (recria os ciclos com seus jogos). Duplicadas são ignoradas automaticamente.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+          <div style="min-width:230px"><label>Formato</label>
+            <select id="cyi-modo">
+              <option value="auto">Detectar automaticamente</option>
+              <option value="operacoes">Operações da Bolsa (export)</option>
+              <option value="metodo">Planilha do Método de Ciclos</option>
+            </select></div>
+          <input type="file" id="cyi-file" accept=".xlsx,.xls,.csv" style="width:auto">
+          <button class="btn" id="cyi-run" disabled>Importar</button>
+        </div>
+        <p class="hint" id="cyi-info" style="margin-top:10px"></p>
       </div>
     </div>
 
@@ -367,6 +383,45 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     </div>
   </div>
   <div class="empty" id="cy-vazio" style="display:none;padding:50px 20px">Nenhum ciclo criado ainda — clique em "➕ Novo ciclo" acima para começar.</div>
+</section>
+
+<!-- ============ CICLOS: DASHBOARD ============ -->
+<section id="tab-ciclodash" class="tab">
+  <div class="filters">
+    <div><label>Período</label><select id="yd-mes"></select></div>
+    <div><label>Ano</label><select id="yd-ano"></select></div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <h2>Lucro por dia</h2>
+      <table><thead><tr><th>Dia</th><th class="num">Jogos</th><th class="num">G</th><th class="num">R</th><th class="num">Lucro</th></tr></thead>
+      <tbody id="yd-dia"></tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Lucro por mês · <span id="yd-anolabel"></span></h2>
+      <table><thead><tr><th>Mês</th><th class="num">Jogos</th><th class="num">G</th><th class="num">R</th><th class="num">Lucro</th></tr></thead>
+      <tbody id="yd-meses"></tbody></table>
+    </div>
+  </div>
+  <div class="panel" style="overflow-x:auto">
+    <h2>Estratégias por ciclo</h2>
+    <table><thead><tr><th>Estratégia</th><th class="num">Jogos</th><th class="num">G</th><th class="num">R</th><th class="num">Lucro</th></tr></thead>
+    <tbody id="yd-estrciclo"></tbody></table>
+  </div>
+</section>
+
+<!-- ============ CICLOS: ANÁLISES ============ -->
+<section id="tab-cicloanalises" class="tab">
+  <div class="panel" style="overflow-x:auto">
+    <h2>Desempenho por ciclo</h2>
+    <table><thead><tr><th>Ciclo</th><th class="num">Jogos</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Taxa de acerto</th><th class="num">Lucro médio / jogo</th><th class="num">Resíduo</th><th class="num">Lucro</th><th>Status</th></tr></thead>
+    <tbody id="ya-ciclos"></tbody></table>
+  </div>
+  <div class="panel">
+    <h2>Desempenho por estratégia · todos os ciclos</h2>
+    <table><thead><tr><th>Estratégia</th><th class="num">Jogos</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Taxa de acerto</th><th class="num">Lucro médio / jogo</th><th class="num">Lucro</th></tr></thead>
+    <tbody id="ya-estr"></tbody></table>
+  </div>
 </section>
 
 <!-- ============ CASA DE APOSTA: PAINEL ============ -->
@@ -785,7 +840,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v16";
+const APP_VERSAO = "v17";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -853,6 +908,7 @@ function anosDisponiveis(){
   db.bets.forEach(b=> s.add(+String(b.data).slice(0,4)));
   db.movs.forEach(m=> s.add(+String(m.data).slice(0,4)));
   db.casa.forEach(b=> s.add(+String(b.data).slice(0,4)));
+  db.cjogos.forEach(j=>{ if(j.data) s.add(+String(j.data).slice(0,4)); });
   return [...s].sort();
 }
 let toastT=null;
@@ -899,7 +955,8 @@ function irParaAba(nome){
   if(t==="ciclos"){
     if(nome==="painel") alvo = "tab-ciclopainel";
     else if(nome==="entradas") alvo = "tab-cicloentradas";
-    else if(nome==="dashboard" || nome==="analises") alvo = "tab-modo";
+    else if(nome==="dashboard") alvo = "tab-ciclodash";
+    else if(nome==="analises") alvo = "tab-cicloanalises";
   }
   if(t==="casa"){
     if(nome==="painel") alvo = "tab-casapainel";
@@ -1340,7 +1397,7 @@ $("f-comp").addEventListener("change", ()=>{
 });
 function fillMesAnoSelects(){
   const anos = anosDisponiveis();
-  ["e","a","d","cs","cd","ca"].forEach(px=>{
+  ["e","a","d","cs","cd","ca","yd"].forEach(px=>{
     const sm=$(px+"-mes"), sa=$(px+"-ano");
     const vm=sm.value, va=sa.value;
     sm.innerHTML = `<option value="all">Todos os meses</option>` + MESES.map((n,i)=>`<option value="${i+1}">${n}</option>`).join("");
@@ -2450,6 +2507,7 @@ $("cy-n-criar").onclick = async ()=>{
 function clearCyForm(){
   cyEditId=null;
   ["cy-jogo","cy-estr","cy-analise","cy-lucro"].forEach(id=>$(id).value="");
+  $("cy-data").value = new Date().toISOString().slice(0,10);
   $("cy-f-title").textContent="Registrar jogo";
   $("cy-save").textContent="Registrar jogo";
   $("cy-cancel").style.display="none";
@@ -2460,6 +2518,7 @@ $("cy-save").onclick = async ()=>{
   if($("cy-lucro").value===""){ toast("Informe o lucro do jogo (negativo para red).", true); return; }
   const base = {
     user_id:user.id, banca_id:bancaId, ciclo_id:c.id,
+    data:$("cy-data").value||null,
     jogo:$("cy-jogo").value.trim(), estrategia:$("cy-estr").value.trim(),
     analise:$("cy-analise").value.trim(), lucro:+$("cy-lucro").value||0
   };
@@ -2483,6 +2542,7 @@ $("cy-save").onclick = async ()=>{
 window.editCyJogo = id=>{
   const j=db.cjogos.find(x=>x.id===id); if(!j) return;
   cyEditId=id;
+  $("cy-data").value=j.data||"";
   $("cy-jogo").value=j.jogo||""; $("cy-estr").value=j.estrategia||"";
   $("cy-analise").value=j.analise||""; $("cy-lucro").value=j.lucro;
   $("cy-f-title").textContent=`Editando jogo ${j.ordem}`;
@@ -2552,7 +2612,7 @@ function renderCicloEntradas(){
   $("cy-tbody").innerHTML = cc.rows.length? cc.rows.map(r=>`
     <tr class="${r.H>0?"g":(r.H<0?"r":"")}">
       <td class="mono">${r.n}${r.cruzou?' <span class="chip st-green">OK</span>':""}</td>
-      <td>${esc(r.jogo.jogo)||"—"}${r.jogo.analise?`<div style="font-size:11.5px;color:var(--dim)">${esc(r.jogo.analise)}</div>`:""}</td>
+      <td>${esc(r.jogo.jogo)||"—"}<div style="font-size:11px;color:var(--dim)">${r.jogo.data? dBR(r.jogo.data):""}${r.jogo.analise?` · ${esc(r.jogo.analise)}`:""}</div></td>
       <td>${r.jogo.estrategia?`<span class="chip ${/lay/i.test(r.jogo.estrategia)?"lay":"back"}">${esc(r.jogo.estrategia)}</span>`:"—"}</td>
       <td class="num">${fmt(r.D)}</td>
       <td class="num" style="color:var(--dim)">${fmt(r.E)}</td>
@@ -2621,7 +2681,239 @@ function renderCicloPainel(){
       <td class="num ${cls(o.pl)}">${o.n? (o.pl/o.n>0?"+":"")+fmt(o.pl/o.n):"—"}</td></tr>`).join("")
     : `<tr><td colspan="4" class="empty">Sem jogos registrados.</td></tr>`;
 }
-function renderCiclos(){ if(tipoAtivo()!=="ciclos") return; renderCicloEntradas(); renderCicloPainel(); }
+/* ---- data do jogo: helpers ---- */
+const cyDataDe = j => j.data || (j.criado_em? String(j.criado_em).slice(0,10) : null);
+
+/* ---- Dashboard de ciclos ---- */
+function renderCicloDash(){
+  if(!$("yd-dia") || tipoAtivo()!=="ciclos") return;
+  const mes=$("yd-mes").value, ano=$("yd-ano").value;
+  $("yd-anolabel").textContent = ano;
+  let list = db.cjogos.filter(j=> String(cyDataDe(j)||"").startsWith(ano));
+  if(mes!=="all") list = list.filter(j=> +String(cyDataDe(j)).slice(5,7)===+mes);
+  const linha = (nome,arr)=>{
+    const g=arr.filter(j=>+j.lucro>0).length, r=arr.filter(j=>+j.lucro<0).length;
+    const pl=arr.reduce((sm,j)=>sm+(+j.lucro||0),0);
+    return `<tr><td>${nome}</td><td class="num">${arr.length}</td>
+      <td class="num pos">${g}</td><td class="num neg">${r}</td>
+      <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
+  };
+  /* por dia */
+  const dias = new Map();
+  list.forEach(j=>{ const d=cyDataDe(j); if(!d) return; if(!dias.has(d)) dias.set(d,[]); dias.get(d).push(j); });
+  $("yd-dia").innerHTML = dias.size? [...dias.entries()].sort((a,b)=>a[0]<b[0]?-1:1).map(([d,arr])=>linha(dBR(d),arr)).join("")
+    : `<tr><td colspan="5" class="empty">Sem jogos no período.</td></tr>`;
+  /* por mês */
+  const anoList = db.cjogos.filter(j=> String(cyDataDe(j)||"").startsWith(ano));
+  $("yd-meses").innerHTML = MESES.map((nome,i)=>{
+    const arr = anoList.filter(j=> +String(cyDataDe(j)).slice(5,7)===i+1);
+    if(!arr.length) return `<tr style="opacity:.35"><td>${nome}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
+    return linha(nome, arr);
+  }).join("");
+  /* estratégias por ciclo (aninhado) */
+  const tb=$("yd-estrciclo");
+  if(!db.ciclos.length){ tb.innerHTML=`<tr><td colspan="5" class="empty">Nenhum ciclo criado.</td></tr>`; return; }
+  tb.innerHTML = db.ciclos.map(c=>{
+    const jogos = jogosDe(c.id).filter(j=> list.includes(j) || mes==="all" && String(cyDataDe(j)||"").startsWith(ano));
+    const jm = new Map();
+    jogos.forEach(j=>{ const k=j.estrategia||"Sem estratégia"; if(!jm.has(k)) jm.set(k,[]); jm.get(k).push(j); });
+    if(!jm.size) return "";
+    const linhas = [...jm.entries()].sort((a,b)=> b[1].reduce((sm,j)=>sm+ +j.lucro,0) - a[1].reduce((sm,j)=>sm+ +j.lucro,0))
+      .map(([k,arr])=>{
+        const g=arr.filter(j=>+j.lucro>0).length, r=arr.filter(j=>+j.lucro<0).length;
+        const pl=arr.reduce((sm,j)=>sm+(+j.lucro||0),0);
+        return `<tr><td style="padding-left:22px">${esc(k)}</td><td class="num">${arr.length}</td>
+          <td class="num pos">${g}</td><td class="num neg">${r}</td>
+          <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
+      }).join("");
+    const g=jogos.filter(j=>+j.lucro>0).length, r=jogos.filter(j=>+j.lucro<0).length;
+    const pl=jogos.reduce((sm,j)=>sm+(+j.lucro||0),0);
+    return `<tr class="grp"><td colspan="5">Ciclo ${c.numero}</td></tr>` + linhas +
+      `<tr class="subt"><td style="padding-left:22px">Total Ciclo ${c.numero}</td><td class="num">${jogos.length}</td>
+        <td class="num pos">${g}</td><td class="num neg">${r}</td>
+        <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
+  }).join("") || `<tr><td colspan="5" class="empty">Sem jogos no período.</td></tr>`;
+}
+["yd-mes","yd-ano"].forEach(id=> $(id).onchange = renderCicloDash);
+
+/* ---- Análises de ciclos ---- */
+function renderCicloAnalises(){
+  if(!$("ya-ciclos") || tipoAtivo()!=="ciclos") return;
+  $("ya-ciclos").innerHTML = db.ciclos.length? db.ciclos.map(c=>{
+    const cc = calcCiclo(c);
+    const g=cc.rows.filter(r=>r.H>0).length, r=cc.rows.filter(x=>x.H<0).length, n=cc.rows.length;
+    return `<tr><td><b>Ciclo ${c.numero}</b></td>
+      <td class="num">${n}</td><td class="num pos">${g}</td><td class="num neg">${r}</td>
+      <td class="num">${(g+r)? pct(g/(g+r)) : "—"}</td>
+      <td class="num ${n?cls(cc.lucro/n):""}">${n? (cc.lucro/n>0?"+":"")+fmt(cc.lucro/n) : "—"}</td>
+      <td class="num ${cls(cc.residuo)}">${fmt(cc.residuo)}</td>
+      <td class="num ${cls(cc.lucro)}">${(cc.lucro>0?"+":"")+fmt(cc.lucro)}</td>
+      <td>${cc.concluido? '<span class="chip st-green">Concluído</span>':'<span class="chip st-pendente">Em aberto</span>'}</td></tr>`;
+  }).join("") : `<tr><td colspan="9" class="empty">Nenhum ciclo criado.</td></tr>`;
+  const em = new Map();
+  db.cjogos.forEach(j=>{
+    const k=j.estrategia||"Sem estratégia";
+    if(!em.has(k)) em.set(k,{n:0,g:0,r:0,pl:0});
+    const o=em.get(k); o.n++; o.pl+= +j.lucro||0;
+    if(+j.lucro>0)o.g++; if(+j.lucro<0)o.r++;
+  });
+  $("ya-estr").innerHTML = em.size? [...em.entries()].sort((a,b)=>b[1].pl-a[1].pl).map(([k,o])=>
+    `<tr><td>${esc(k)}</td><td class="num">${o.n}</td>
+      <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num">${(o.g+o.r)? pct(o.g/(o.g+o.r)) : "—"}</td>
+      <td class="num ${o.n?cls(o.pl/o.n):""}">${o.n? (o.pl/o.n>0?"+":"")+fmt(o.pl/o.n) : "—"}</td>
+      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty">Sem jogos registrados.</td></tr>`;
+}
+
+/* ---- Importação de planilha (ciclos) ---- */
+let cyiPlano = null;
+const cyiAssinatura = j => [j.data||"", impNorm(j.jogo), (+j.lucro||0).toFixed(2)].join("|");
+function cyiCell(ws, addr){ const c = ws[addr]; return c? c.v : null; }
+function parseCyOperacoes(wbk){
+  const r = parseOperacoes(wbk);
+  const jogos = r.out.map(b=>({
+    data:b.data, jogo:[b.mand,b.vis].filter(Boolean).join(" x "),
+    estrategia:b.mercado||"", analise:b.obs||"", lucro:+b.pl||0
+  })).sort((a,b)=> a.data<b.data?-1:1);
+  return { tipo:"operacoes", jogos, erros:r.erros, msg:"operações da bolsa" };
+}
+function parseCyMetodo(wbk){
+  const abas = wbk.SheetNames.filter(n=>/^Ciclo\s*\d+$/i.test(n.trim()));
+  if(!abas.length) return { tipo:"metodo", ciclos:[], erros:[], msg:"nenhuma aba 'Ciclo N' encontrada" };
+  const dir = wbk.Sheets["Diretrizes"];
+  const frac = v => v==null? null : (+v<=1? +v*100 : +v);
+  const objPadrao = dir? frac(cyiCell(dir,"M3")) : null;
+  const fatorPadrao = dir? frac(cyiCell(dir,"O3")) : null;
+  const ciclos=[];
+  abas.forEach(nome=>{
+    const ws = wbk.Sheets[nome];
+    const bancaIni = +cyiCell(ws,"R2")||0;
+    const jogos=[];
+    for(let r=7;r<=56;r++){
+      const lucro = cyiCell(ws,"H"+r);
+      const jogo = cyiCell(ws,"M"+r);
+      const estr = cyiCell(ws,"N"+r);
+      const ana = cyiCell(ws,"O"+r);
+      const tem = (lucro!=null && lucro!=="" && +lucro!==0) || (jogo&&String(jogo).trim()) || (estr&&String(estr).trim());
+      if(!tem) continue;
+      jogos.push({ data:null, jogo:String(jogo||"").trim(), estrategia:String(estr||"").trim(),
+        analise:String(ana||"").trim(), lucro:+lucro||0 });
+    }
+    if(!bancaIni && !jogos.length) return;
+    const numero = +(nome.match(/\d+/)||[0])[0];
+    const stopCol = "CDEFG"[Math.min(Math.max(numero,1),5)-1];
+    const stop = dir? frac(cyiCell(dir, stopCol+"13")) : null;
+    ciclos.push({
+      numero, banca_inicial:bancaIni,
+      obj_jogo1: objPadrao||6, fator_reducao: fatorPadrao||2, stop_pct: stop||100,
+      data_inicio: impData(cyiCell(ws,"N2")),
+      saque: +cyiCell(ws,"R28")||0,
+      jogos
+    });
+  });
+  return { tipo:"metodo", ciclos, erros:[], msg:`planilha do Método de Ciclos (${ciclos.length} ciclo${ciclos.length===1?"":"s"} com dados)` };
+}
+function cyiDetectar(wbk){
+  if(wbk.SheetNames.some(n=>/^Ciclo\s*\d+$/i.test(n.trim())) || wbk.SheetNames.includes("Diretrizes")) return "metodo";
+  return "operacoes";
+}
+$("cyi-toggle").onclick = ()=>{
+  const p=$("cyi-panel");
+  p.style.display = p.style.display==="none"? "block":"none";
+};
+$("cyi-modo").onchange = ()=>{ if($("cyi-file").files[0]) $("cyi-file").onchange({target:$("cyi-file")}); };
+$("cyi-file").onchange = e=>{
+  const f=e.target.files[0];
+  cyiPlano=null; $("cyi-run").disabled=true; $("cyi-info").textContent="";
+  if(!f) return;
+  const r=new FileReader();
+  r.onload = ()=>{
+    try{
+      const wbk = XLSX.read(r.result, { type:"array", cellDates:true });
+      let modo = $("cyi-modo").value;
+      if(modo==="auto") modo = cyiDetectar(wbk);
+      if(modo==="metodo"){
+        const res = parseCyMetodo(wbk);
+        const totalJogos = res.ciclos.reduce((sm,c)=>sm+c.jogos.length,0);
+        cyiPlano = res;
+        $("cyi-info").textContent = `Formato: ${res.msg} · ${totalJogos} jogo(s) no total · serão criados como novos ciclos nesta banca`;
+        $("cyi-run").disabled = !res.ciclos.length;
+      } else {
+        const res = parseCyOperacoes(wbk);
+        if(!cicloAtivo()){ $("cyi-info").textContent="Crie ou selecione um ciclo antes de importar operações."; return; }
+        const existentes = new Set(jogosDe(cicloAtivoId).map(cyiAssinatura));
+        const vistas = new Set();
+        let dup=0;
+        res.jogos = res.jogos.filter(j=>{
+          const a=cyiAssinatura(j);
+          if(existentes.has(a) || vistas.has(a)){ dup++; return false; }
+          vistas.add(a); return true;
+        });
+        cyiPlano = res;
+        let msg = `Formato: ${res.msg} · ${res.jogos.length} jogo(s) novos para o Ciclo ${cicloAtivo().numero}`;
+        if(dup) msg += ` · ⚠️ ${dup} duplicado(s) ignorados`;
+        if(res.erros.length) msg += ` · ${res.erros.length} linha(s) com dados faltando`;
+        $("cyi-info").textContent = msg;
+        $("cyi-run").disabled = !res.jogos.length;
+      }
+    }catch(err){
+      console.error(err);
+      $("cyi-info").textContent = "Não consegui ler o arquivo — confira o formato (.xlsx ou .csv).";
+    }
+  };
+  r.readAsArrayBuffer(f);
+};
+$("cyi-run").onclick = async ()=>{
+  if(!cyiPlano) return;
+  $("cyi-run").disabled=true;
+  try{
+    if(cyiPlano.tipo==="metodo"){
+      if(!confirm(`Criar ${cyiPlano.ciclos.length} ciclo(s) novos com seus jogos nesta banca?`)) { $("cyi-run").disabled=false; return; }
+      let base = db.ciclos.reduce((m,c)=>Math.max(m,+c.numero||0),0);
+      for(const c of cyiPlano.ciclos){
+        base++;
+        const { data:novo, error } = await sb.from("ciclos").insert({
+          user_id:user.id, banca_id:bancaId, numero:base,
+          banca_inicial:c.banca_inicial, obj_jogo1:c.obj_jogo1,
+          fator_reducao:c.fator_reducao, stop_pct:c.stop_pct,
+          data_inicio:c.data_inicio, saque:c.saque||0
+        }).select().single();
+        if(error) throw error;
+        db.ciclos.push(novo);
+        if(c.jogos.length){
+          const rows = c.jogos.map((j,ix)=>({ user_id:user.id, banca_id:bancaId, ciclo_id:novo.id,
+            ordem:ix+1, data:j.data, jogo:j.jogo, estrategia:j.estrategia, analise:j.analise, lucro:j.lucro }));
+          for(let i=0;i<rows.length;i+=200){
+            const { data:ins, error:e2 } = await sb.from("ciclo_jogos").insert(rows.slice(i,i+200)).select();
+            if(e2) throw e2;
+            (ins||[]).forEach(d=>db.cjogos.push(d));
+          }
+        }
+        cicloAtivoId = novo.id;
+      }
+      toast(`${cyiPlano.ciclos.length} ciclo(s) importados.`);
+    } else {
+      const c = cicloAtivo();
+      if(!confirm(`Importar ${cyiPlano.jogos.length} jogo(s) para o Ciclo ${c.numero}? (Duplicados já foram deixados de fora.)`)) { $("cyi-run").disabled=false; return; }
+      let ordem = jogosDe(c.id).reduce((m,j)=>Math.max(m,+j.ordem||0),0);
+      const rows = cyiPlano.jogos.map(j=>({ user_id:user.id, banca_id:bancaId, ciclo_id:c.id,
+        ordem:++ordem, data:j.data, jogo:j.jogo, estrategia:j.estrategia, analise:j.analise, lucro:j.lucro }));
+      for(let i=0;i<rows.length;i+=200){
+        const { data:ins, error } = await sb.from("ciclo_jogos").insert(rows.slice(i,i+200)).select();
+        if(error) throw error;
+        (ins||[]).forEach(d=>db.cjogos.push(d));
+      }
+      toast(`${rows.length} jogo(s) importados no Ciclo ${c.numero}.`);
+    }
+    cyiPlano=null; $("cyi-file").value=""; $("cyi-info").textContent="";
+    $("cyi-panel").style.display="none";
+    fillMesAnoSelects(); renderCiclos();
+  }catch(e){ sbErr(e,"importar a planilha"); }
+  $("cyi-run").disabled=false;
+};
+
+function renderCiclos(){ if(tipoAtivo()!=="ciclos") return; renderCicloEntradas(); renderCicloPainel(); renderCicloDash(); renderCicloAnalises(); }
 function fillEstrCiclos(){
   const set2 = new Set([...CICLOS_ESTRATEGIAS, ...cad.estrategias.map(i=>i.nome)]);
   $("dl-estr-ciclos").innerHTML = [...set2].map(v=>`<option value="${esc(v)}">`).join("");
