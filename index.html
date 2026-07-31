@@ -358,6 +358,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <h2 id="cad-title">Equipes <span class="cad-count" id="cad-count"></span></h2>
       <div class="cad-add">
         <input id="cad-input" placeholder="Nome">
+        <input id="cad-input-pais" list="dl-pais" placeholder="País (opcional)" style="display:none;max-width:180px">
         <button class="btn sm" id="cad-addbtn">Adicionar</button>
         <button class="btn ghost sm" id="cad-imp-toggle">Importar lista</button>
       </div>
@@ -454,7 +455,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v4";
+const APP_VERSAO = "v5";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -699,14 +700,23 @@ async function loadCadastros(){
       cad[key] = (data||[]).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
     }catch(e){ sbErr(e,"carregar cadastro de "+CAD_LABELS[key]); cad[key]=[]; }
   }
+  /* classifica automaticamente campeonatos conhecidos que ainda não têm país */
+  try{
+    const sem = cad.campeonatos.filter(c=> !(c.pais||"").trim() && COMP_PAIS[c.nome]);
+    for(const c of sem){
+      const { error } = await sb.from("cad_campeonatos").update({ pais: COMP_PAIS[c.nome] }).eq("id", c.id).eq("user_id", user.id);
+      if(!error) c.pais = COMP_PAIS[c.nome];
+    }
+  }catch(e){ console.error("backfill país", e); }
   renderCadastros();
 }
 function renderCadastros(){
   document.querySelectorAll(".cad-mi").forEach(b=> b.classList.toggle("on", b.dataset.cad===cadKey));
   $("cad-title").innerHTML = `${CAD_LABELS[cadKey]} <span class="cad-count" id="cad-count">· ${cad[cadKey].length}</span>`;
   $("cad-input").placeholder = CAD_PLACEHOLDER[cadKey];
+  $("cad-input-pais").style.display = cadKey==="campeonatos" ? "block" : "none";
   $("cad-listbox").innerHTML = cad[cadKey].length? cad[cadKey].map(item=>
-    `<div class="cad-item"><span>${esc(item.nome)}</span>
+    `<div class="cad-item"><span>${esc(item.nome)}${item.pais?` <span style="color:var(--dim);font-size:11px">· ${esc(item.pais)}</span>`:""}</span>
       <button class="x" title="Excluir" onclick="cadDel('${cadKey}','${item.id}')">✕</button></div>`).join("")
     : `<div class="empty">Nenhum item cadastrado.</div>`;
 }
@@ -726,11 +736,13 @@ window.cadAdd = async key=>{
   const nome = inp.value.trim();
   if(!nome){ toast("Digite o nome.", true); return; }
   if(cad[key].some(i=>i.nome.toLowerCase()===nome.toLowerCase())){ toast("Este item já está cadastrado.", true); return; }
-  const { data, error } = await sb.from(CAD_TABLES[key]).insert({ user_id:user.id, nome }).select().single();
+  const rec = { user_id:user.id, nome };
+  if(key==="campeonatos"){ const p=$("cad-input-pais").value.trim(); if(p) rec.pais=p; }
+  const { data, error } = await sb.from(CAD_TABLES[key]).insert(rec).select().single();
   if(error) return sbErr(error,"cadastrar");
   cad[key].push(data);
   cad[key].sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
-  inp.value="";
+  inp.value=""; if(key==="campeonatos") $("cad-input-pais").value="";
   toast("Cadastrado.");
   renderCadastros(); fillDatalists();
 };
@@ -899,17 +911,35 @@ function fillDatalists(){
     const s=new Set(cad[key].map(i=>i.nome)); extra.forEach(v=>v&&s.add(v));
     $(id).innerHTML=[...s].sort((a,b)=>a.localeCompare(b,"pt")).map(v=>`<option value="${esc(v)}">`).join("");
   };
-  set("dl-comp","campeonatos", db.bets.map(b=>b.comp));
+  updateCompList();
   set("dl-pais","paises", db.bets.map(b=>b.pais));
   set("dl-times","equipes", db.bets.flatMap(b=>[b.mand,b.vis]));
   set("dl-forma","estrategias", db.bets.map(b=>b.forma));
   set("dl-merc","mercados", db.bets.map(b=>b.mercado));
 }
+/* competições sugeridas conforme o país selecionado */
+function updateCompList(){
+  const p = $("f-pais").value.trim().toLowerCase();
+  let doPais = cad.campeonatos, semPais = [];
+  if(p){
+    doPais = cad.campeonatos.filter(c=> (c.pais||"").toLowerCase()===p);
+    semPais = cad.campeonatos.filter(c=> !(c.pais||"").trim());
+  }
+  const extras = new Set(db.bets.map(b=>b.comp).filter(Boolean));
+  doPais.forEach(c=>extras.delete(c.nome)); semPais.forEach(c=>extras.delete(c.nome));
+  $("dl-comp").innerHTML =
+    doPais.map(c=>`<option value="${esc(c.nome)}">`).join("")
+    + semPais.map(c=>`<option value="${esc(c.nome)}">`).join("")
+    + (p? "" : [...extras].map(v=>`<option value="${esc(v)}">`).join(""));
+}
+$("f-pais").addEventListener("input", updateCompList);
 /* preenche o país automaticamente quando a competição é conhecida */
-document.addEventListener("DOMContentLoaded", ()=>{});
 $("f-comp").addEventListener("change", ()=>{
   const comp = $("f-comp").value.trim();
-  if(!$("f-pais").value.trim() && COMP_PAIS[comp]) $("f-pais").value = COMP_PAIS[comp];
+  if($("f-pais").value.trim() || !comp) return;
+  const c = cad.campeonatos.find(x=>x.nome.toLowerCase()===comp.toLowerCase() && (x.pais||"").trim());
+  const pais = c? c.pais : COMP_PAIS[comp];
+  if(pais){ $("f-pais").value = pais; updateCompList(); }
 });
 function fillMesAnoSelects(){
   const anos = anosDisponiveis();
@@ -1019,6 +1049,7 @@ $("f-save").onclick = async ()=>{
     obs:g("f-obs")
   };
   $("f-save").disabled=true;
+  await oferecerCadastros(row);
   if(editId){
     const { data:upd, error } = await sb.from("banca_bets").update(row).eq("id", editId).eq("user_id", user.id).select().single();
     $("f-save").disabled=false;
@@ -1036,6 +1067,36 @@ $("f-save").onclick = async ()=>{
 };
 ["e-mes","e-ano"].forEach(id=> $(id).onchange = renderEntradas);
 $("e-busca").oninput = renderEntradas;
+
+/* oferece cadastrar País / Competição / Equipes digitados que não existem no cadastro */
+async function oferecerCadastros(row){
+  const pend = [];
+  const jaTem = (key,val)=> cad[key].some(i=>i.nome.toLowerCase()===val.toLowerCase());
+  const add = (key,val,extra)=>{
+    val = (val||"").trim();
+    if(!val || jaTem(key,val)) return;
+    if(pend.some(p=>p.key===key && p.val.toLowerCase()===val.toLowerCase())) return;
+    pend.push({key,val,extra});
+  };
+  add("paises", row.pais);
+  add("campeonatos", row.comp, { pais: row.pais });
+  add("equipes", row.mand);
+  add("equipes", row.vis);
+  if(!pend.length) return;
+  const msg = "Estes itens ainda não estão no cadastro:\n\n"
+    + pend.map(p=>`• ${CAD_LABELS[p.key].replace(/s$/,"").replace("Paíse","País")}: ${p.val}`).join("\n")
+    + "\n\nDeseja cadastrá-los agora? (A entrada será salva de qualquer forma.)";
+  if(!confirm(msg)) return;
+  for(const p of pend){
+    const rec = { user_id:user.id, nome:p.val };
+    if(p.key==="campeonatos" && (p.extra?.pais||"").trim()) rec.pais = p.extra.pais.trim();
+    const { data, error } = await sb.from(CAD_TABLES[p.key]).upsert(rec, { onConflict:"user_id,nome", ignoreDuplicates:true }).select();
+    if(!error && data && data[0]) cad[p.key].push(data[0]);
+  }
+  Object.keys(cad).forEach(k=> cad[k].sort((a,b)=>a.nome.localeCompare(b.nome,"pt")));
+  renderCadastros();
+  toast("Itens novos cadastrados.");
+}
 
 /* ============ Análises ============ */
 function agrupa(list, keyFn){
