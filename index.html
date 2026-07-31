@@ -383,10 +383,82 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <div class="card"><div class="k">Stake sugerida</div><div class="v" id="cp-stake">R$ 0,00</div><div class="s" id="cp-stake-s">gestão da banca</div></div>
     </div>
   </div>
+  <div class="grid2">
+    <div class="panel">
+      <h2>P/L por mês</h2>
+      <div class="bars" id="cp-bars"></div>
+    </div>
+    <div class="panel">
+      <h2>Últimas apostas</h2>
+      <table><thead><tr><th>Data</th><th>Casa</th><th>Aposta</th><th class="num">Odd</th><th class="num">Valor</th><th>Estado</th><th class="num">P/L</th></tr></thead>
+      <tbody id="cp-last"></tbody></table>
+    </div>
+  </div>
   <div class="panel">
-    <h2>Últimas apostas</h2>
-    <table><thead><tr><th>Data</th><th>Casa</th><th>Aposta</th><th class="num">Odd</th><th class="num">Valor</th><th>Estado</th><th class="num">P/L</th></tr></thead>
-    <tbody id="cp-last"></tbody></table>
+    <h2>Resumo mensal · <span id="cp-ano"></span></h2>
+    <table>
+      <thead><tr><th>Mês</th><th class="num">Início</th><th class="num">P/L</th><th class="num">Final</th><th class="num">ROI</th><th class="num">Levantamentos</th><th class="num">Aportes</th><th class="num">Apostas</th></tr></thead>
+      <tbody id="cp-meses"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ CASA DE APOSTA: DASHBOARD ============ -->
+<section id="tab-casadash" class="tab">
+  <div class="filters">
+    <div><label>Período</label><select id="cd-mes"></select></div>
+    <div><label>Ano</label><select id="cd-ano"></select></div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <h2>Ganhos e perdas por dia</h2>
+      <table><thead><tr><th>Dia</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Investido</th><th class="num">P/L</th></tr></thead>
+      <tbody id="cd-dia"></tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Ganhos e perdas por mês · <span id="cd-anolabel"></span></h2>
+      <table><thead><tr><th>Mês</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Investido</th><th class="num">P/L</th></tr></thead>
+      <tbody id="cd-meses"></tbody></table>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Por casa de apostas</h2>
+    <table><thead><tr><th>Casa</th><th class="num">Apostas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Odd média</th><th class="num">Investido</th><th class="num">P/L</th></tr></thead>
+    <tbody id="cd-casa"></tbody></table>
+  </div>
+  <div class="panel">
+    <h2>Por tipo de aposta</h2>
+    <table><thead><tr><th>Tipo de aposta</th><th class="num">Apostas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Odd média</th><th class="num">P/L</th></tr></thead>
+    <tbody id="cd-tipo"></tbody></table>
+  </div>
+</section>
+
+<!-- ============ CASA DE APOSTA: ANÁLISES ============ -->
+<section id="tab-casaanalises" class="tab">
+  <div class="filters">
+    <div><label>Período</label><select id="ca-mes"></select></div>
+    <div><label>Ano</label><select id="ca-ano"></select></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h2>Times mais lucrativos</h2><div id="ca-times-top"></div></div>
+    <div class="panel"><h2>Times menos lucrativos</h2><div id="ca-times-low"></div></div>
+  </div>
+  <div class="panel">
+    <h2>Por jogador</h2>
+    <table><thead><tr><th>Jogador</th><th>Clube</th><th>Posição</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+    <tbody id="ca-jog"></tbody></table>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <h2>Por competição</h2>
+      <table><thead><tr><th>Competição</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+      <tbody id="ca-comp"></tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Por esporte</h2>
+      <table><thead><tr><th>Esporte</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+      <tbody id="ca-esporte"></tbody></table>
+    </div>
   </div>
 </section>
 
@@ -692,7 +764,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v10";
+const APP_VERSAO = "v11";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -811,7 +883,8 @@ function irParaAba(nome){
   if(t==="casa"){
     if(nome==="painel") alvo = "tab-casapainel";
     else if(nome==="entradas") alvo = "tab-casaentradas";
-    else if(nome==="dashboard" || nome==="analises") alvo = "tab-modo";
+    else if(nome==="dashboard") alvo = "tab-casadash";
+    else if(nome==="analises") alvo = "tab-casaanalises";
   }
   if(alvo==="tab-modo"){
     $("modo-tipo").textContent = TIPOS_GESTAO[t];
@@ -1246,7 +1319,7 @@ $("f-comp").addEventListener("change", ()=>{
 });
 function fillMesAnoSelects(){
   const anos = anosDisponiveis();
-  ["e","a","d","cs"].forEach(px=>{
+  ["e","a","d","cs","cd","ca"].forEach(px=>{
     const sm=$(px+"-mes"), sa=$(px+"-ano");
     const vm=sm.value, va=sa.value;
     sm.innerHTML = `<option value="all">Todos os meses</option>` + MESES.map((n,i)=>`<option value="${i+1}">${n}</option>`).join("");
@@ -1789,12 +1862,29 @@ window.delCasa = async id=>{
   toast("Aposta excluída.");
   renderCasa();
 };
-function filteredCasa(){
-  const mes=$("cs-mes").value, ano=$("cs-ano").value;
+function filteredCasaBy(px){
+  const mes=$(px+"-mes").value, ano=$(px+"-ano").value;
   let list = [...db.casa].sort((a,b)=> a.data<b.data?-1 : a.data>b.data?1 : String(a.hora||"").localeCompare(String(b.hora||"")));
   list = list.filter(b=> String(b.data).startsWith(ano));
   if(mes!=="all") list = list.filter(b=> +String(b.data).slice(5,7)===+mes);
   return list;
+}
+const filteredCasa = ()=> filteredCasaBy("cs");
+function timesDoJogo(t){
+  if(!t) return [];
+  return String(t).split(/\s+(?:x|×|vs\.?|v)\s+|\s+[-—]\s+/i).map(z=>z.trim()).filter(Boolean).slice(0,2);
+}
+function agrupaCasa(list, keyFn){
+  const m = new Map();
+  list.forEach(b=>{
+    const ks = keyFn(b); [...new Set((Array.isArray(ks)?ks:[ks]).filter(Boolean))].forEach(k=>{
+      if(!m.has(k)) m.set(k,{n:0,g:0,r:0,pl:0,inv:0,oddS:0,oddN:0});
+      const o=m.get(k); o.n++; o.pl+= +b.pl||0; o.inv+= +b.valor||0;
+      if(b.estado==="green")o.g++; if(b.estado==="red")o.r++;
+      const ot=oddTotalDe(b.selecoes); if(ot>0){o.oddS+=ot;o.oddN++;}
+    });
+  });
+  return [...m.entries()];
 }
 function renderCasaEntradas(){
   if(!$("cs-tbody")) return;
@@ -1867,6 +1957,44 @@ function renderCasaPainel(){
   $("cp-pendv").textContent = `${fmt(pend.reduce((sm,x)=>sm+(+x.valor||0),0))} em jogo`;
   $("cp-stake").textContent = fmt(Math.max(saldo*((+b.gestao||0)/100),0));
   $("cp-stake-s").textContent = `gestão de ${b.gestao}% da banca`;
+  /* barras mensais e resumo mensal */
+  const ano = new Date().getFullYear();
+  $("cp-ano").textContent = ano;
+  const plMes = i => db.casa.filter(x=> String(x.data).startsWith(`${ano}-${String(i+1).padStart(2,"0")}`)).reduce((sm,x)=>sm+(+x.pl||0),0);
+  const vals = MESES.map((_,i)=>plMes(i));
+  const mxv = Math.max(...vals.map(Math.abs),1);
+  $("cp-bars").innerHTML = vals.map((v,i)=>
+    `<div class="barwrap" title="${MESES[i]}: ${fmt(v)}">
+      <div class="bar ${v<0?"neg":""}" style="height:${v===0?2:Math.round(Math.abs(v)/mxv*92)+2}px;${v===0?"background:var(--line)":""}"></div>
+      <div class="bar-l">${MESES[i].slice(0,3)}</div></div>`).join("");
+  const antesDe = iso => (+b.inicial||0)
+    + db.casa.filter(x=>x.data<iso).reduce((sm,x)=>sm+(+x.pl||0),0)
+    + movsUntil(m=>m.data<iso);
+  const mb=$("cp-meses"); mb.innerHTML="";
+  MESES.forEach((nome,i)=>{
+    const m=String(i+1).padStart(2,"0");
+    const ini=`${ano}-${m}-01`;
+    const fimIso = i===11? `${ano+1}-01-01` : `${ano}-${String(i+2).padStart(2,"0")}-01`;
+    const bm = db.casa.filter(x=> x.data>=ini && x.data<fimIso);
+    const lev = db.movs.filter(x=>x.tipo==="levantamento" && x.data>=ini && x.data<fimIso).reduce((sm,x)=>sm+ +x.valor,0);
+    const apo = db.movs.filter(x=>x.tipo==="aporte" && x.data>=ini && x.data<fimIso).reduce((sm,x)=>sm+ +x.valor,0);
+    if(!bm.length && !lev && !apo){
+      mb.insertAdjacentHTML("beforeend",`<tr style="opacity:.35"><td>${nome}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`);
+      return;
+    }
+    const inicio=antesDe(ini);
+    const plM=bm.reduce((sm,x)=>sm+(+x.pl||0),0);
+    const fim=inicio+plM+apo-lev;
+    const roiM=inicio>0? plM/inicio:0;
+    mb.insertAdjacentHTML("beforeend",
+      `<tr><td>${nome}</td><td class="num">${fmt(inicio)}</td>
+        <td class="num ${cls(plM)}">${(plM>0?"+":"")+fmt(plM)}</td>
+        <td class="num">${fmt(fim)}</td>
+        <td class="num ${cls(roiM)}">${(roiM>0?"+":"")+pct(roiM)}</td>
+        <td class="num">${lev?fmt(lev):"—"}</td>
+        <td class="num">${apo?fmt(apo):"—"}</td>
+        <td class="num">${bm.length}</td></tr>`);
+  });
   const last=[...db.casa].sort((a,c)=>a.data<c.data?-1:1).slice(-6).reverse();
   $("cp-last").innerHTML = last.length? last.map(x=>{
     const sels=x.selecoes||[];
@@ -1880,8 +2008,81 @@ function renderCasaPainel(){
       <td class="num ${cls(+x.pl)}">${x.estado==="pendente"?"—":(+x.pl>0?"+":"")+fmt(+x.pl||0)}</td></tr>`;}).join("")
     : `<tr><td colspan="7" class="empty">Nenhuma aposta nesta banca ainda.</td></tr>`;
 }
-function renderCasa(){ renderCasaPainel(); renderCasaEntradas(); }
+function renderCasaDash(){
+  if(!$("cd-dia")) return;
+  const list = filteredCasaBy("cd");
+  const ano = $("cd-ano").value;
+  $("cd-anolabel").textContent = ano;
+  const linha = (nome,o,odd,inv)=>`<tr><td>${esc(nome)}</td><td class="num">${o.n}</td>
+     <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+     ${odd?`<td class="num">${oddFmt(o.oddN? o.oddS/o.oddN:null)}</td>`:""}
+     ${inv?`<td class="num">${fmt(o.inv)}</td>`:""}
+     <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`;
+  /* por dia */
+  const dias = agrupaCasa(list, x=>x.data).sort((a,b)=> a[0]<b[0]?-1:1);
+  $("cd-dia").innerHTML = dias.length? dias.map(([d,o])=>linha(dBR(d),o,false,true)).join("")
+    : `<tr><td colspan="6" class="empty">Sem apostas no período.</td></tr>`;
+  /* por mês (do ano selecionado, todas as apostas do ano) */
+  const anoList = [...db.casa].filter(x=>String(x.data).startsWith(ano));
+  $("cd-meses").innerHTML = MESES.map((nome,i)=>{
+    const bm = anoList.filter(x=> +String(x.data).slice(5,7)===i+1);
+    if(!bm.length) return `<tr style="opacity:.35"><td>${nome}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
+    const o={n:bm.length, g:bm.filter(x=>x.estado==="green").length, r:bm.filter(x=>x.estado==="red").length,
+      inv:bm.reduce((sm,x)=>sm+(+x.valor||0),0), pl:bm.reduce((sm,x)=>sm+(+x.pl||0),0)};
+    return `<tr><td>${nome}</td><td class="num">${o.n}</td><td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num">${fmt(o.inv)}</td><td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`;
+  }).join("");
+  /* por casa */
+  const casas = agrupaCasa(list, x=> x.casa||"Sem casa").sort((a,b)=>b[1].pl-a[1].pl);
+  $("cd-casa").innerHTML = casas.length? casas.map(([n,o])=>linha(n,o,true,true)).join("")
+    : `<tr><td colspan="7" class="empty">Sem apostas no período.</td></tr>`;
+  /* por tipo de aposta */
+  const tipos = agrupaCasa(list, x=> (x.selecoes||[]).map(z=>z.tipo).filter(Boolean)).sort((a,b)=>b[1].pl-a[1].pl);
+  $("cd-tipo").innerHTML = tipos.length? tipos.map(([n,o])=>linha(n,o,true,false)).join("")
+    : `<tr><td colspan="6" class="empty">Sem apostas com tipo preenchido no período.</td></tr>`;
+}
+function renderCasaAnalises(){
+  if(!$("ca-times-top")) return;
+  const list = filteredCasaBy("ca");
+  const times = agrupaCasa(list, x=> [...(x.selecoes||[]).flatMap(z=>timesDoJogo(z.titulo)), ...(x.selecoes||[]).map(z=>z.clube)].filter(Boolean)).sort((a,b)=>b[1].pl-a[1].pl);
+  const mx = Math.max(...times.map(t=>Math.abs(t[1].pl)),1);
+  const rowT = ([nome,o])=>
+    `<div style="padding:7px 0;border-bottom:1px solid #1c2634">
+      <div style="display:flex;justify-content:space-between;font-size:13.5px">
+        <span>${esc(nome)} <span style="color:var(--dim);font-size:11.5px">${o.g}G · ${o.r}R</span></span>
+        <b class="mono ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</b></div>
+      <div class="rank-pl"><i style="left:${o.pl<0?50-Math.abs(o.pl)/mx*50:50}%;width:${Math.abs(o.pl)/mx*50}%;background:${o.pl<0?"var(--red)":"var(--green)"}"></i></div>
+    </div>`;
+  $("ca-times-top").innerHTML = times.filter(t=>t[1].pl>0).slice(0,10).map(rowT).join("") || `<div class="empty">Sem times lucrativos no período.</div>`;
+  $("ca-times-low").innerHTML = times.filter(t=>t[1].pl<0).slice(-10).reverse().map(rowT).join("") || `<div class="empty">Sem times no vermelho no período.</div>`;
+  /* por jogador */
+  const jm = new Map();
+  list.forEach(b=> (b.selecoes||[]).forEach(z=>{
+    if(!z.jogador) return;
+    const k = z.jogador.trim();
+    if(!jm.has(k)) jm.set(k,{clube:z.clube||"", pos:z.posicao||"", n:0,g:0,r:0,pl:0});
+    const o=jm.get(k); o.n++; o.pl+= +b.pl||0;
+    if(b.estado==="green")o.g++; if(b.estado==="red")o.r++;
+    if(z.clube) o.clube=z.clube; if(z.posicao) o.pos=z.posicao;
+  }));
+  $("ca-jog").innerHTML = jm.size? [...jm.entries()].sort((a,b)=>b[1].pl-a[1].pl).map(([n,o])=>
+    `<tr><td>${esc(n)}</td><td>${esc(o.clube)||"—"}</td><td>${esc(o.pos)||"—"}</td>
+      <td class="num">${o.n}</td><td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty">Sem apostas de jogador no período.</td></tr>`;
+  /* por competição e por esporte */
+  const linha2 = ([n,o])=>`<tr><td>${esc(n)}</td><td class="num">${o.n}</td>
+     <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+     <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`;
+  const comps = agrupaCasa(list, x=> (x.selecoes||[]).map(z=>z.competicao).filter(Boolean)).sort((a,b)=>b[1].pl-a[1].pl);
+  $("ca-comp").innerHTML = comps.length? comps.map(linha2).join("") : `<tr><td colspan="5" class="empty">Sem dados no período.</td></tr>`;
+  const esp = agrupaCasa(list, x=> (x.selecoes||[]).map(z=>z.esporte).filter(Boolean)).sort((a,b)=>b[1].pl-a[1].pl);
+  $("ca-esporte").innerHTML = esp.length? esp.map(linha2).join("") : `<tr><td colspan="5" class="empty">Sem dados no período.</td></tr>`;
+}
+function renderCasa(){ renderCasaPainel(); renderCasaEntradas(); renderCasaDash(); renderCasaAnalises(); }
 ["cs-mes","cs-ano"].forEach(id=> $(id).onchange = renderCasaEntradas);
+["cd-mes","cd-ano"].forEach(id=> $(id).onchange = renderCasaDash);
+["ca-mes","ca-ano"].forEach(id=> $(id).onchange = renderCasaAnalises);
 $("cs-busca").oninput = renderCasaEntradas;
 
 
