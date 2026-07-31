@@ -98,6 +98,7 @@ tbody tr:hover{background:#19222d}
 .formgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 .formgrid .c2{grid-column:span 2}
 .formgrid .c3{grid-column:span 3}
+.formgrid .c4{grid-column:span 4}
 .formgrid .c6{grid-column:span 6}
 .rowactions{display:flex;gap:6px;justify-content:flex-end}
 .iconbtn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:5px;padding:3px 8px;font-size:12px}
@@ -164,7 +165,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
   .cad-menu.open{display:flex}
   .cadwrap .panel{width:100%}
   .formgrid{grid-template-columns:repeat(2,1fr)}
-  .formgrid .c3,.formgrid .c6{grid-column:span 2}
+  .formgrid .c3,.formgrid .c4,.formgrid .c6{grid-column:span 2}
   .cfg{grid-template-columns:1fr}
   .hero-banca .big{font-size:34px}
   nav{width:100%;overflow-x:auto;margin-left:0}
@@ -278,6 +279,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <div class="c2"><label>Forma de trabalho</label><input list="dl-forma" id="f-forma" placeholder="Ex.: Lay - Favorito"></div>
       <div class="c2"><label>Mercado</label><input list="dl-merc" id="f-merc" placeholder="Ex.: Match Odds"></div>
       <div class="c2"><label>Tipo</label><select id="f-tipo"><option>Pré Live</option><option>Live</option></select></div>
+      <div class="c2"><label>Odd</label><input type="number" step="0.01" min="1" id="f-odd" placeholder="Ex.: 1,85"></div>
       <div class="c2"><label>Stake (R$)</label><input type="number" step="0.01" id="f-stake" placeholder="0,00"></div>
       <div class="c2"><label>P/L (R$)</label><input type="number" step="0.01" id="f-pl" placeholder="+ green · − red"></div>
       <div class="c2"><label>Placar (M × V)</label>
@@ -287,7 +289,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
           <input type="number" min="0" id="f-gv" placeholder="0" style="text-align:center">
         </div>
       </div>
-      <div class="c6"><label>Observação</label><input id="f-obs" placeholder="Ex.: cash aos 70 minutos, sufoco, fora do padrão…"></div>
+      <div class="c4"><label>Observação</label><input id="f-obs" placeholder="Ex.: cash aos 70 minutos, sufoco, fora do padrão…"></div>
       <div class="c6" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn" id="f-save">Salvar entrada</button>
         <button class="btn ghost" id="f-cancel" style="display:none">Cancelar edição</button>
@@ -308,7 +310,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <table>
       <thead><tr>
         <th>Data</th><th>Competição</th><th>Jogo</th><th>Forma de trabalho</th><th>Mercado</th><th>Tipo</th>
-        <th class="num">Stake</th><th class="num">P/L</th><th class="num">ROI</th><th></th>
+        <th class="num">Odd</th><th class="num">Stake</th><th class="num">P/L</th><th class="num">ROI</th><th></th>
       </tr></thead>
       <tbody id="e-tbody"></tbody>
     </table>
@@ -326,18 +328,18 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
   </div>
   <div class="panel">
     <h2>Por forma de trabalho</h2>
-    <table><thead><tr><th>Estratégia</th><th class="num">Entradas</th><th class="num">Pré</th><th class="num">Live</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">P/L</th></tr></thead>
+    <table><thead><tr><th>Estratégia</th><th class="num">Entradas</th><th class="num">Pré</th><th class="num">Live</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Odd média</th><th class="num">P/L</th></tr></thead>
     <tbody id="a-forma"></tbody></table>
   </div>
   <div class="grid2">
     <div class="panel">
       <h2>Por mercado</h2>
-      <table><thead><tr><th>Mercado</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+      <table><thead><tr><th>Mercado</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">Odd média</th><th class="num">P/L</th></tr></thead>
       <tbody id="a-merc"></tbody></table>
     </div>
     <div class="panel">
       <h2>Por competição</h2>
-      <table><thead><tr><th>Competição</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+      <table><thead><tr><th>Competição</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">Odd média</th><th class="num">P/L</th></tr></thead>
       <tbody id="a-comp"></tbody></table>
     </div>
   </div>
@@ -385,17 +387,17 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
   </div>
   <div class="panel">
     <h2>Resumo por país</h2>
-    <table><thead><tr><th>País</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Profit / Loss</th></tr></thead>
+    <table><thead><tr><th>País</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Odd média</th><th class="num">Profit / Loss</th></tr></thead>
     <tbody id="dash-pais"></tbody></table>
   </div>
   <div class="panel" style="overflow-x:auto">
     <h2>Mercados por país</h2>
-    <table><thead><tr><th>Mercado</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Profit / Loss</th></tr></thead>
+    <table><thead><tr><th>Mercado</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Odd média</th><th class="num">Profit / Loss</th></tr></thead>
     <tbody id="dash-merc"></tbody></table>
   </div>
   <div class="panel" style="overflow-x:auto">
     <h2>Competições por país</h2>
-    <table><thead><tr><th>Competição</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Profit / Loss</th></tr></thead>
+    <table><thead><tr><th>Competição</th><th class="num">Entradas</th><th class="num">Greens</th><th class="num">Reds</th><th class="num">Odd média</th><th class="num">Profit / Loss</th></tr></thead>
     <tbody id="dash-comp"></tbody></table>
   </div>
 </section>
@@ -455,7 +457,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v5";
+const APP_VERSAO = "v6";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -503,6 +505,11 @@ const dBR = iso => { if(!iso) return "—"; const [a,m,d]=String(iso).split("-")
 const sortedBets = () => [...db.bets].sort((a,b)=> a.data<b.data?-1 : a.data>b.data?1 : String(a.criado_em||"").localeCompare(String(b.criado_em||"")));
 const plOf = list => list.reduce((s,b)=>s+(+b.pl||0),0);
 const stakeOf = list => list.reduce((s,b)=>s+(+b.stake||0),0);
+const oddFmt = v => v==null? "—" : (+v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+function oddMedia(list){
+  const odds = list.map(b=>+b.odd).filter(v=>v>0);
+  return odds.length? odds.reduce((a,b)=>a+b,0)/odds.length : null;
+}
 function movsUntil(pred){ return db.movs.filter(pred).reduce((s,m)=> s + (m.tipo==="aporte"? +m.valor : -m.valor), 0); }
 function bancaAntesDe(iso){
   const pl = plOf(db.bets.filter(b=>b.data < iso));
@@ -972,7 +979,8 @@ function renderEntradas(){
      <div><span>Reds </span><b class="neg">${r}</b></div>
      <div><span>Stake total </span><b>${fmt(st)}</b></div>
      <div><span>P/L </span><b class="${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</b></div>
-     <div><span>ROI/stake </span><b class="${cls(pl)}">${st? (pl>0?"+":"")+pct(pl/st) : "—"}</b></div>`;
+     <div><span>ROI/stake </span><b class="${cls(pl)}">${st? (pl>0?"+":"")+pct(pl/st) : "—"}</b></div>
+     <div><span>Odd média </span><b>${oddFmt(oddMedia(list))}</b></div>`;
 
   const tb=$("e-tbody");
   tb.innerHTML = list.length? [...list].reverse().map(b=>{
@@ -986,6 +994,7 @@ function renderEntradas(){
       <td><span class="chip ${isLay?"lay":"back"}">${esc(b.forma)||"—"}</span></td>
       <td>${esc(b.mercado)||"—"}</td>
       <td><span class="chip ${b.tipo==="Live"?"live":"pre"}">${b.tipo==="Live"?"Live":"Pré"}</span></td>
+      <td class="num">${oddFmt(b.odd>0? b.odd : null)}</td>
       <td class="num">${fmt(+b.stake||0)}</td>
       <td class="num ${cls(+b.pl)}">${(+b.pl>0?"+":"")+fmt(+b.pl||0)}</td>
       <td class="num ${roi!=null?cls(roi):""}">${roi!=null? (roi>0?"+":"")+pct(roi):"—"}</td>
@@ -993,10 +1002,10 @@ function renderEntradas(){
         <button class="iconbtn" onclick="editBet('${b.id}')">Editar</button>
         <button class="iconbtn" onclick="delBet('${b.id}')">Excluir</button></div></td>
     </tr>`;}).join("")
-  : `<tr><td colspan="10" class="empty">Nenhuma entrada neste período.</td></tr>`;
+  : `<tr><td colspan="11" class="empty">Nenhuma entrada neste período.</td></tr>`;
 }
 function clearForm(){
-  ["f-comp","f-pais","f-mand","f-vis","f-forma","f-merc","f-stake","f-pl","f-gm","f-gv","f-obs"].forEach(id=>$(id).value="");
+  ["f-comp","f-pais","f-mand","f-vis","f-forma","f-merc","f-odd","f-stake","f-pl","f-gm","f-gv","f-obs"].forEach(id=>$(id).value="");
   $("f-data").value = new Date().toISOString().slice(0,10);
   $("f-tipo").value = "Pré Live";
   editId=null;
@@ -1015,6 +1024,7 @@ window.editBet = id=>{
   $("f-vis").value=b.vis||"";
   $("f-forma").value=b.forma||"";
   $("f-merc").value=b.mercado||"";
+  $("f-odd").value=b.odd||"";
   $("f-stake").value=b.stake;
   $("f-pl").value=b.pl;
   $("f-gm").value=b.gm??"";
@@ -1044,7 +1054,7 @@ $("f-save").onclick = async ()=>{
     user_id:user.id, banca_id:bancaId, data,
     comp:g("f-comp"), pais:g("f-pais"), tipo:g("f-tipo"),
     mand:g("f-mand"), vis:g("f-vis"), forma:g("f-forma"), mercado:g("f-merc"),
-    stake:+g("f-stake")||0, pl:+g("f-pl")||0,
+    odd:+g("f-odd")||null, stake:+g("f-stake")||0, pl:+g("f-pl")||0,
     gm:g("f-gm")===""?null:+g("f-gm"), gv:g("f-gv")===""?null:+g("f-gv"),
     obs:g("f-obs")
   };
@@ -1104,8 +1114,9 @@ function agrupa(list, keyFn){
   list.forEach(b=>{
     const ks = keyFn(b); (Array.isArray(ks)?ks:[ks]).forEach(k=>{
       if(!k) return;
-      if(!m.has(k)) m.set(k,{n:0,g:0,r:0,pl:0,pre:0,live:0});
+      if(!m.has(k)) m.set(k,{n:0,g:0,r:0,pl:0,pre:0,live:0,oddS:0,oddN:0});
       const o=m.get(k); o.n++; o.pl+= +b.pl||0;
+      if(+b.odd>0){ o.oddS+= +b.odd; o.oddN++; }
       if(+b.pl>0)o.g++; if(+b.pl<0)o.r++;
       if(b.tipo==="Live")o.live+= +b.pl||0; else o.pre+= +b.pl||0;
     });
@@ -1130,19 +1141,20 @@ function renderAnalises(){
 
   const linha = (nome,o,extra="")=>`<tr><td>${esc(nome)}</td><td class="num">${o.n}</td>${extra}
      <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+     <td class="num">${oddFmt(o.oddN? o.oddS/o.oddN : null)}</td>
      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`;
   const bySum = (a,b)=> b[1].pl - a[1].pl;
 
   $("a-forma").innerHTML =
     agrupa(list,b=>b.forma).sort(bySum).map(([n,o])=>
       linha(n,o,`<td class="num ${cls(o.pre)}">${(o.pre>0?"+":"")+fmt(o.pre)}</td><td class="num ${cls(o.live)}">${(o.live>0?"+":"")+fmt(o.live)}</td>`)).join("")
-    || `<tr><td colspan="7" class="empty">Sem dados no período.</td></tr>`;
+    || `<tr><td colspan="8" class="empty">Sem dados no período.</td></tr>`;
   $("a-merc").innerHTML =
     agrupa(list,b=>b.mercado).sort(bySum).map(([n,o])=>linha(n,o)).join("")
-    || `<tr><td colspan="5" class="empty">Sem dados no período.</td></tr>`;
+    || `<tr><td colspan="6" class="empty">Sem dados no período.</td></tr>`;
   $("a-comp").innerHTML =
     agrupa(list,b=>b.comp).sort(bySum).map(([n,o])=>linha(n,o)).join("")
-    || `<tr><td colspan="5" class="empty">Sem dados no período.</td></tr>`;
+    || `<tr><td colspan="6" class="empty">Sem dados no período.</td></tr>`;
 }
 ["a-mes","a-ano"].forEach(id=> $(id).onchange = renderAnalises);
 
@@ -1157,15 +1169,17 @@ function renderDashboard(){
   $("dash-pais").innerHTML = porPais.length? porPais.map(([nome,o])=>
     `<tr><td>${esc(nome)}</td><td class="num">${o.n}</td>
       <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num">${oddFmt(o.oddN? o.oddS/o.oddN : null)}</td>
       <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("")
     + `<tr class="subt"><td>TOTAL GERAL</td><td class="num">${list.length}</td>
         <td class="num pos">${totG}</td><td class="num neg">${totR}</td>
+        <td class="num">${oddFmt(oddMedia(list))}</td>
         <td class="num ${cls(totPl)}">${(totPl>0?"+":"")+fmt(totPl)}</td></tr>`
-    : `<tr><td colspan="5" class="empty">Sem entradas no período — registre entradas com o campo País preenchido.</td></tr>`;
+    : `<tr><td colspan="6" class="empty">Sem entradas no período — registre entradas com o campo País preenchido.</td></tr>`;
 
   /* 2 e 3. Agrupamentos aninhados: país → mercado / país → competição */
   const nested = innerFn=>{
-    if(!list.length) return `<tr><td colspan="5" class="empty">Sem entradas no período.</td></tr>`;
+    if(!list.length) return `<tr><td colspan="6" class="empty">Sem entradas no período.</td></tr>`;
     const grupos = new Map();
     list.forEach(b=>{
       const p = paisDe(b);
@@ -1177,12 +1191,14 @@ function renderDashboard(){
       const linhas = agrupa(betsP, innerFn).sort((a,b)=>b[1].pl-a[1].pl).map(([nome,o])=>
         `<tr><td style="padding-left:22px">${esc(nome)||"—"}</td><td class="num">${o.n}</td>
           <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+          <td class="num">${oddFmt(o.oddN? o.oddS/o.oddN : null)}</td>
           <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("");
       const g=betsP.filter(b=>+b.pl>0).length, r=betsP.filter(b=>+b.pl<0).length, pl=plOf(betsP);
-      return `<tr class="grp"><td colspan="5">${esc(pais)}</td></tr>`
+      return `<tr class="grp"><td colspan="6">${esc(pais)}</td></tr>`
         + linhas
         + `<tr class="subt"><td style="padding-left:22px">Total ${esc(pais)}</td><td class="num">${betsP.length}</td>
             <td class="num pos">${g}</td><td class="num neg">${r}</td>
+            <td class="num">${oddFmt(oddMedia(betsP))}</td>
             <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
     }).join("");
   };
@@ -1263,7 +1279,7 @@ $("io-file").onchange = e=>{
       const bets = d.bets.map(b=>({
         user_id:user.id, banca_id:bancaId, data:b.data, comp:b.comp||"", pais:b.pais||"", tipo:b.tipo||"Pré Live",
         mand:b.mand||"", vis:b.vis||"", forma:b.forma||"", mercado:b.mercado||"",
-        stake:+b.stake||0, pl:+b.pl||0,
+        odd:+b.odd||null, stake:+b.stake||0, pl:+b.pl||0,
         gm:(b.gm===""||b.gm==null)?null:+b.gm, gv:(b.gv===""||b.gv==null)?null:+b.gv,
         obs:b.obs||""
       }));
