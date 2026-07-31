@@ -412,12 +412,12 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
   <div class="grid2">
     <div class="panel">
       <h2>Ganhos e perdas por dia</h2>
-      <table><thead><tr><th>Dia</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Investido</th><th class="num">P/L</th></tr></thead>
+      <table><thead><tr><th>Dia</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Odd média</th><th class="num">Investido</th><th class="num">P/L</th></tr></thead>
       <tbody id="cd-dia"></tbody></table>
     </div>
     <div class="panel">
       <h2>Ganhos e perdas por mês · <span id="cd-anolabel"></span></h2>
-      <table><thead><tr><th>Mês</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Investido</th><th class="num">P/L</th></tr></thead>
+      <table><thead><tr><th>Mês</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Odd média</th><th class="num">Investido</th><th class="num">P/L</th></tr></thead>
       <tbody id="cd-meses"></tbody></table>
     </div>
   </div>
@@ -445,18 +445,18 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
   </div>
   <div class="panel">
     <h2>Por jogador</h2>
-    <table><thead><tr><th>Jogador</th><th>Clube</th><th>Posição</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+    <table><thead><tr><th>Jogador</th><th>Clube</th><th>Posição</th><th>Mercado</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Odd média</th><th class="num">P/L</th></tr></thead>
     <tbody id="ca-jog"></tbody></table>
   </div>
   <div class="grid2">
     <div class="panel">
       <h2>Por competição</h2>
-      <table><thead><tr><th>Competição</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+      <table><thead><tr><th>Competição</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Odd média</th><th class="num">P/L</th></tr></thead>
       <tbody id="ca-comp"></tbody></table>
     </div>
     <div class="panel">
       <h2>Por esporte</h2>
-      <table><thead><tr><th>Esporte</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">P/L</th></tr></thead>
+      <table><thead><tr><th>Esporte</th><th class="num">Apostas</th><th class="num">G</th><th class="num">R</th><th class="num">Odd média</th><th class="num">P/L</th></tr></thead>
       <tbody id="ca-esporte"></tbody></table>
     </div>
   </div>
@@ -764,7 +764,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v11";
+const APP_VERSAO = "v12";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -2020,16 +2020,19 @@ function renderCasaDash(){
      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`;
   /* por dia */
   const dias = agrupaCasa(list, x=>x.data).sort((a,b)=> a[0]<b[0]?-1:1);
-  $("cd-dia").innerHTML = dias.length? dias.map(([d,o])=>linha(dBR(d),o,false,true)).join("")
-    : `<tr><td colspan="6" class="empty">Sem apostas no período.</td></tr>`;
+  $("cd-dia").innerHTML = dias.length? dias.map(([d,o])=>linha(dBR(d),o,true,true)).join("")
+    : `<tr><td colspan="7" class="empty">Sem apostas no período.</td></tr>`;
   /* por mês (do ano selecionado, todas as apostas do ano) */
   const anoList = [...db.casa].filter(x=>String(x.data).startsWith(ano));
   $("cd-meses").innerHTML = MESES.map((nome,i)=>{
     const bm = anoList.filter(x=> +String(x.data).slice(5,7)===i+1);
-    if(!bm.length) return `<tr style="opacity:.35"><td>${nome}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
+    if(!bm.length) return `<tr style="opacity:.35"><td>${nome}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
+    const odds=bm.map(x=>oddTotalDe(x.selecoes)).filter(v=>v>0);
     const o={n:bm.length, g:bm.filter(x=>x.estado==="green").length, r:bm.filter(x=>x.estado==="red").length,
-      inv:bm.reduce((sm,x)=>sm+(+x.valor||0),0), pl:bm.reduce((sm,x)=>sm+(+x.pl||0),0)};
+      inv:bm.reduce((sm,x)=>sm+(+x.valor||0),0), pl:bm.reduce((sm,x)=>sm+(+x.pl||0),0),
+      om: odds.length? odds.reduce((a,b)=>a+b,0)/odds.length : null};
     return `<tr><td>${nome}</td><td class="num">${o.n}</td><td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num">${oddFmt(o.om)}</td>
       <td class="num">${fmt(o.inv)}</td><td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`;
   }).join("");
   /* por casa */
@@ -2059,25 +2062,29 @@ function renderCasaAnalises(){
   const jm = new Map();
   list.forEach(b=> (b.selecoes||[]).forEach(z=>{
     if(!z.jogador) return;
-    const k = z.jogador.trim();
-    if(!jm.has(k)) jm.set(k,{clube:z.clube||"", pos:z.posicao||"", n:0,g:0,r:0,pl:0});
+    const k = z.jogador.trim() + "|" + (z.tipo||"").trim();
+    if(!jm.has(k)) jm.set(k,{nome:z.jogador.trim(), tipo:(z.tipo||"").trim(), clube:z.clube||"", pos:z.posicao||"", n:0,g:0,r:0,pl:0,oddS:0,oddN:0});
     const o=jm.get(k); o.n++; o.pl+= +b.pl||0;
     if(b.estado==="green")o.g++; if(b.estado==="red")o.r++;
     if(z.clube) o.clube=z.clube; if(z.posicao) o.pos=z.posicao;
+    const ot=oddTotalDe(b.selecoes); if(ot>0){o.oddS+=ot;o.oddN++;}
   }));
-  $("ca-jog").innerHTML = jm.size? [...jm.entries()].sort((a,b)=>b[1].pl-a[1].pl).map(([n,o])=>
-    `<tr><td>${esc(n)}</td><td>${esc(o.clube)||"—"}</td><td>${esc(o.pos)||"—"}</td>
+  $("ca-jog").innerHTML = jm.size? [...jm.values()].sort((a,b)=>b.pl-a.pl).map(o=>
+    `<tr><td>${esc(o.nome)}</td><td>${esc(o.clube)||"—"}</td><td>${esc(o.pos)||"—"}</td>
+      <td>${o.tipo?`<span class="chip back">${esc(o.tipo)}</span>`:"—"}</td>
       <td class="num">${o.n}</td><td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num">${oddFmt(o.oddN? o.oddS/o.oddN:null)}</td>
       <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("")
-    : `<tr><td colspan="7" class="empty">Sem apostas de jogador no período.</td></tr>`;
+    : `<tr><td colspan="9" class="empty">Sem apostas de jogador no período.</td></tr>`;
   /* por competição e por esporte */
   const linha2 = ([n,o])=>`<tr><td>${esc(n)}</td><td class="num">${o.n}</td>
      <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+     <td class="num">${oddFmt(o.oddN? o.oddS/o.oddN:null)}</td>
      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`;
   const comps = agrupaCasa(list, x=> (x.selecoes||[]).map(z=>z.competicao).filter(Boolean)).sort((a,b)=>b[1].pl-a[1].pl);
-  $("ca-comp").innerHTML = comps.length? comps.map(linha2).join("") : `<tr><td colspan="5" class="empty">Sem dados no período.</td></tr>`;
+  $("ca-comp").innerHTML = comps.length? comps.map(linha2).join("") : `<tr><td colspan="6" class="empty">Sem dados no período.</td></tr>`;
   const esp = agrupaCasa(list, x=> (x.selecoes||[]).map(z=>z.esporte).filter(Boolean)).sort((a,b)=>b[1].pl-a[1].pl);
-  $("ca-esporte").innerHTML = esp.length? esp.map(linha2).join("") : `<tr><td colspan="5" class="empty">Sem dados no período.</td></tr>`;
+  $("ca-esporte").innerHTML = esp.length? esp.map(linha2).join("") : `<tr><td colspan="6" class="empty">Sem dados no período.</td></tr>`;
 }
 function renderCasa(){ renderCasaPainel(); renderCasaEntradas(); renderCasaDash(); renderCasaAnalises(); }
 ["cs-mes","cs-ano"].forEach(id=> $(id).onchange = renderCasaEntradas);
