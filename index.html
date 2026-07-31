@@ -142,6 +142,16 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 .cad-item .x{background:none;border:none;color:var(--dim);font-size:14px;padding:2px 7px;border-radius:4px}
 .cad-item .x:hover{color:var(--red);background:var(--red-soft)}
 .cad-count{font-size:11px;color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none;margin-left:6px}
+.cy-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.cy-chip{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:20px;padding:8px 16px;font-weight:700;font-size:13.5px}
+.cy-chip.on{border-color:var(--gold);color:var(--gold);background:rgba(233,184,76,.08)}
+.cy-chip.done{border-color:var(--green);color:var(--green)}
+.cy-chip.done.on{background:var(--green-soft)}
+.cy-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:900px){.cy-cards{grid-template-columns:repeat(2,1fr)}}
+.cy-next{background:linear-gradient(135deg,rgba(233,184,76,.12),rgba(233,184,76,.03));border:1px solid var(--gold);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+.cy-next .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.cy-next .v{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700}
 .selcard{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--panel2)}
 .selhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px}
 .fmt{display:flex;gap:8px;flex-wrap:wrap}
@@ -252,6 +262,110 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div style="font-size:22px;font-weight:800;margin:10px 0 8px" id="modo-nome"></div>
     <p style="color:var(--mut);max-width:520px;margin:0 auto;line-height:1.6">O layout deste tipo de gestão ainda está em definição. As abas Banca, Cadastros e Configuração já funcionam normalmente para esta banca — em breve o painel e o registro de entradas específicos deste método estarão aqui.</p>
   </div>
+</section>
+
+<!-- ============ CICLOS: PAINEL ============ -->
+<section id="tab-ciclopainel" class="tab">
+  <div class="hero">
+    <div class="hero-banca">
+      <div class="eyebrow" id="yp-nome">Banca</div>
+      <div class="big" id="yp-banca">R$ 0,00</div>
+      <div class="sub" id="yp-sub">—</div>
+    </div>
+    <div class="cards">
+      <div class="card"><div class="k">Lucro atual</div><div class="v" id="yp-pl">R$ 0,00</div><div class="s">soma de todos os ciclos</div></div>
+      <div class="card"><div class="k">% Lucro atual</div><div class="v" id="yp-pct">0%</div><div class="s">sobre a banca inicial</div></div>
+      <div class="card"><div class="k">Ciclos concluídos</div><div class="v" id="yp-done">0 / 0</div><div class="s">objetivo alcançado</div></div>
+      <div class="card"><div class="k">Saques efetuados</div><div class="v" id="yp-saq">R$ 0,00</div><div class="s">total sacado dos ciclos</div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Resumo dos ciclos</h2>
+    <table><thead><tr><th>Ciclo</th><th>Início</th><th class="num">Banca inicial</th><th class="num">Objetivo</th><th class="num">Jogos</th><th class="num">Lucro</th><th class="num">Lucro %</th><th class="num">Banca final</th><th>Status</th></tr></thead>
+    <tbody id="yp-ciclos"></tbody></table>
+  </div>
+  <div class="panel">
+    <h2>Estratégias utilizadas · todos os ciclos</h2>
+    <table><thead><tr><th>Estratégia</th><th class="num">Entradas</th><th class="num">Saldo</th><th class="num">Saldo médio / entrada</th></tr></thead>
+    <tbody id="yp-estr"></tbody></table>
+  </div>
+</section>
+
+<!-- ============ CICLOS: ENTRADAS ============ -->
+<section id="tab-cicloentradas" class="tab">
+  <div class="cy-chips" id="cy-chips"></div>
+
+  <div class="panel" id="cy-novo" style="display:none">
+    <h2>Novo ciclo</h2>
+    <div class="formgrid">
+      <div class="c2"><label>Banca inicial do ciclo (R$)</label><input type="number" step="0.01" id="cy-n-banca"></div>
+      <div class="c2"><label>Objetivo do jogo 1 (%)</label><input type="number" step="0.1" id="cy-n-obj" value="6"></div>
+      <div class="c2"><label>Fator de redução (%)</label><input type="number" step="0.1" id="cy-n-fator" value="2"></div>
+      <div class="c2"><label>Parar com % de lucro</label><input type="number" step="1" id="cy-n-stop" value="100"></div>
+      <div class="c2"><label>Data de início</label><input type="date" id="cy-n-data"></div>
+      <div class="c2" style="align-self:end;display:flex;gap:8px">
+        <button class="btn" id="cy-n-criar">Criar ciclo</button>
+        <button class="btn ghost" id="cy-n-cancelar">Cancelar</button>
+      </div>
+    </div>
+    <p class="hint">Objetivo do ciclo = banca inicial × (1 + % de parada). Ex.: R$ 100 com parada de 100% → objetivo R$ 200. A stake sugerida segue os multiplicadores do método (Ciclo 3 = 1,5×, Ciclo 4 = 2×, Ciclo 5 = 3× da banca do Ciclo 1).</p>
+  </div>
+
+  <div id="cy-corpo" style="display:none">
+    <div class="cy-cards" id="cy-cards"></div>
+    <div class="cy-next" id="cy-next"></div>
+
+    <div class="panel">
+      <h2 id="cy-f-title">Registrar jogo</h2>
+      <div class="formgrid">
+        <div class="c3"><label>Jogo</label><input id="cy-jogo" placeholder="Ex.: Real Madrid × Barcelona"></div>
+        <div class="c3"><label>Estratégia</label><input list="dl-estr-ciclos" id="cy-estr" placeholder="Ex.: Lay Favorito 1º Tempo"></div>
+        <div class="c2"><label>Lucro (R$)</label><input type="number" step="0.01" id="cy-lucro" placeholder="+ green · − red"></div>
+        <div class="c4"><label>Análise</label><input id="cy-analise" placeholder="Anotações do jogo…"></div>
+        <div class="c6" style="display:flex;gap:10px">
+          <button class="btn" id="cy-save">Registrar jogo</button>
+          <button class="btn ghost" id="cy-cancel" style="display:none">Cancelar edição</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:0;overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Jogo</th><th>Estratégia</th>
+          <th class="num">Entrar com</th><th class="num">Banca teórica</th><th class="num">Objetivo</th><th class="num">Obj. s/ B.T.</th>
+          <th class="num">Lucro</th><th class="num">% s/ banca</th><th class="num">Resíduo</th><th></th>
+        </tr></thead>
+        <tbody id="cy-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h2>Lucro por estratégia · este ciclo</h2>
+        <table><thead><tr><th>Estratégia</th><th class="num">Entradas</th><th class="num">Saldo</th></tr></thead>
+        <tbody id="cy-estr-tbody"></tbody></table>
+      </div>
+      <div class="panel">
+        <h2>Parâmetros do ciclo</h2>
+        <div class="formgrid">
+          <div class="c2"><label>Banca inicial (R$)</label><input type="number" step="0.01" id="cy-p-banca"></div>
+          <div class="c2"><label>Objetivo jogo 1 (%)</label><input type="number" step="0.1" id="cy-p-obj"></div>
+          <div class="c2"><label>Fator de redução (%)</label><input type="number" step="0.1" id="cy-p-fator"></div>
+          <div class="c2"><label>Parar com % de lucro</label><input type="number" step="1" id="cy-p-stop"></div>
+          <div class="c2"><label>Data início</label><input type="date" id="cy-p-ini"></div>
+          <div class="c2"><label>Data fim</label><input type="date" id="cy-p-fim"></div>
+          <div class="c2"><label>Saque efetuado (R$)</label><input type="number" step="0.01" id="cy-p-saque"></div>
+          <div class="c2"><label>Data do saque</label><input type="date" id="cy-p-saqued"></div>
+          <div class="c6" style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" id="cy-p-save">Salvar parâmetros</button>
+            <button class="btn danger" id="cy-p-del">Excluir ciclo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="empty" id="cy-vazio" style="display:none;padding:50px 20px">Nenhum ciclo criado ainda — clique em "➕ Novo ciclo" acima para começar.</div>
 </section>
 
 <!-- ============ CASA DE APOSTA: PAINEL ============ -->
@@ -570,6 +684,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 <datalist id="dl-comp"></datalist>
 <datalist id="dl-comp-all"></datalist>
 <datalist id="dl-casas"></datalist>
+<datalist id="dl-estr-ciclos"></datalist>
 <datalist id="dl-pais"></datalist>
 <datalist id="dl-times"></datalist>
 <datalist id="dl-forma"></datalist>
@@ -577,7 +692,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v8";
+const APP_VERSAO = "v9";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -613,7 +728,7 @@ const tipoAtivo = ()=> banca().tipo || "bolsa";
 let user = null;
 let bancas = [];
 let bancaId = null;
-let db = { bets:[], movs:[], casa:[] };
+let db = { bets:[], movs:[], casa:[], ciclos:[], cjogos:[] };
 let cad = { equipes:[], paises:[], campeonatos:[], mercados:[], estrategias:[], casas:[] };
 let cadKey = "equipes";
 
@@ -688,7 +803,11 @@ function irParaAba(nome){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
   const t = tipoAtivo();
   let alvo = "tab-"+nome;
-  if(t==="ciclos" && ABAS_BOLSA.includes(nome)) alvo = "tab-modo";
+  if(t==="ciclos"){
+    if(nome==="painel") alvo = "tab-ciclopainel";
+    else if(nome==="entradas") alvo = "tab-cicloentradas";
+    else if(nome==="dashboard" || nome==="analises") alvo = "tab-modo";
+  }
   if(t==="casa"){
     if(nome==="painel") alvo = "tab-casapainel";
     else if(nome==="entradas") alvo = "tab-casaentradas";
@@ -759,6 +878,20 @@ async function loadBancaData(){
     if(error) throw error;
     db.movs = data||[];
   }catch(e){ sbErr(e,"carregar movimentações"); db.movs=[]; }
+  db.ciclos=[]; db.cjogos=[];
+  if(tipoAtivo()==="ciclos"){
+    try{
+      const { data, error } = await sb.from("ciclos").select("*").eq("user_id", user.id).eq("banca_id", bancaId).order("numero").limit(500);
+      if(error) throw error;
+      db.ciclos = data||[];
+    }catch(e){ sbErr(e,"carregar ciclos"); }
+    try{
+      const { data, error } = await sb.from("ciclo_jogos").select("*").eq("user_id", user.id).eq("banca_id", bancaId).order("ordem").limit(20000);
+      if(error) throw error;
+      db.cjogos = data||[];
+    }catch(e){ sbErr(e,"carregar jogos dos ciclos"); }
+    if(db.ciclos.length && !db.ciclos.some(c=>c.id===cicloAtivoId)) cicloAtivoId = db.ciclos[db.ciclos.length-1].id;
+  }
   db.casa=[];
   if(tipoAtivo()==="casa"){
     try{
@@ -773,14 +906,16 @@ async function loadBancaData(){
 let resumo = {};
 async function refreshResumo(){
   try{
-    const [b,m,c] = await Promise.all([
+    const [b,m,c,y] = await Promise.all([
       sb.from("banca_bets").select("banca_id,pl").eq("user_id",user.id).limit(20000),
       sb.from("banca_movs").select("banca_id,tipo,valor").eq("user_id",user.id).limit(20000),
-      sb.from("casa_bets").select("banca_id,pl").eq("user_id",user.id).limit(20000)
+      sb.from("casa_bets").select("banca_id,pl").eq("user_id",user.id).limit(20000),
+      sb.from("ciclo_jogos").select("banca_id,lucro").eq("user_id",user.id).limit(20000)
     ]);
     resumo = {};
     (b.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.pl+= +r.pl||0; o.n++; });
     (c.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.pl+= +r.pl||0; o.n++; });
+    (y.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.pl+= +r.lucro||0; o.n++; });
     (m.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.mov+= r.tipo==="aporte"? +r.valor : -r.valor; });
   }catch(e){ console.error(e); }
   renderBancaTab();
@@ -1073,6 +1208,7 @@ function fillDatalists(){
   set("dl-forma","estrategias", db.bets.map(b=>b.forma));
   set("dl-merc","mercados", db.bets.map(b=>b.mercado));
   set("dl-casas","casas", db.casa.map(b=>b.casa));
+  fillEstrCiclos();
   $("dl-comp-all").innerHTML = cad.campeonatos.map(c=>`<option value="${esc(c.nome)}">`).join("");
 }
 /* competições sugeridas conforme o país selecionado */
@@ -1713,8 +1849,280 @@ function renderCasa(){ renderCasaPainel(); renderCasaEntradas(); }
 ["cs-mes","cs-ano"].forEach(id=> $(id).onchange = renderCasaEntradas);
 $("cs-busca").oninput = renderCasaEntradas;
 
+
+/* ============ Método de Ciclos ============ */
+const CICLOS_ESTRATEGIAS = ["Lay Favorito 1º Tempo","Lay Favorito 2º Tempo","Lay Zebra 1º Tempo","Lay Zebra 2º Tempo","Back Favorito Vencendo","Back Zebra Vencendo","Vovô","Lay Empate (2 diferença)","Lay Empate"];
+const CY_MULT = [1,1,1.5,2,3];
+let cicloAtivoId = null;
+let cyEditId = null;
+
+const cicloAtivo = ()=> db.ciclos.find(c=>c.id===cicloAtivoId) || null;
+const jogosDe = cid => db.cjogos.filter(j=>j.ciclo_id===cid).sort((a,b)=>a.ordem-b.ordem);
+
+/* Reproduz as fórmulas da planilha do Nettuno */
+function calcCiclo(c){
+  const jogos = jogosDe(c.id);
+  const obj1 = (+c.obj_jogo1||0)/100, fator = (+c.fator_reducao||0)/100, stop = (+c.stop_pct||0)/100;
+  const bancaIni = +c.banca_inicial||0;
+  const objetivoCiclo = bancaIni*(1+stop);
+  const rows = [];
+  let K=obj1, D=bancaIni, E=bancaIni;
+  jogos.forEach((j,i)=>{
+    if(i>0){
+      const prev = rows[i-1];
+      K = prev.K*(1-fator);
+      D = prev.D + prev.H;
+      E = prev.E*(1+prev.K);
+    }
+    const F=D*K, G=E*K, H=+j.lucro||0;
+    rows.push({ jogo:j, n:i+1, K, D, E, F, G, H, I: D? H/D : 0, J: H-G, cruzou: E>objetivoCiclo && (i===0 || rows[i-1].E<=objetivoCiclo) });
+  });
+  /* próximo jogo */
+  let next;
+  if(!rows.length) next = { n:1, K:obj1, D:bancaIni, E:bancaIni };
+  else {
+    const u = rows[rows.length-1];
+    next = { n:rows.length+1, K:u.K*(1-fator), D:u.D+u.H, E:u.E*(1+u.K) };
+  }
+  next.F = next.D*next.K; next.G = next.E*next.K;
+  const lucro = rows.reduce((sm,r)=>sm+r.H,0);
+  const bancaFinal = bancaIni + lucro;
+  return { rows, next, lucro, bancaFinal,
+    lucroPct: bancaIni? lucro/bancaIni : 0,
+    residuo: rows.reduce((sm,r)=>sm+r.J,0),
+    objetivoCiclo, concluido: bancaFinal>=objetivoCiclo && objetivoCiclo>0 };
+}
+function ciclosBancaAtual(){
+  return (+banca().inicial||0) + db.cjogos.reduce((sm,j)=>sm+(+j.lucro||0),0) + movsUntil(()=>true);
+}
+
+/* ---- chips e navegação entre ciclos ---- */
+function renderChips(){
+  const box=$("cy-chips");
+  box.innerHTML = db.ciclos.map(c=>{
+    const cc = calcCiclo(c);
+    return `<button class="cy-chip ${c.id===cicloAtivoId?"on":""} ${cc.concluido?"done":""}" onclick="usarCiclo('${c.id}')">Ciclo ${c.numero}${cc.concluido?" ✓":""}</button>`;
+  }).join("") + `<button class="cy-chip" onclick="abrirNovoCiclo()">➕ Novo ciclo</button>`;
+  $("cy-vazio").style.display = db.ciclos.length? "none":"block";
+  $("cy-corpo").style.display = (db.ciclos.length && cicloAtivo())? "block":"none";
+}
+window.usarCiclo = id=>{ cicloAtivoId=id; cyEditId=null; clearCyForm(); renderCiclos(); };
+window.abrirNovoCiclo = ()=>{
+  const n = db.ciclos.length+1;
+  const mult = CY_MULT[Math.min(n,CY_MULT.length)-1];
+  $("cy-n-banca").value = ((+banca().inicial||0)*mult).toFixed(2);
+  const ult = db.ciclos[db.ciclos.length-1];
+  $("cy-n-obj").value = ult? ult.obj_jogo1 : 6;
+  $("cy-n-fator").value = ult? ult.fator_reducao : 2;
+  $("cy-n-stop").value = ult? ult.stop_pct : 100;
+  $("cy-n-data").value = new Date().toISOString().slice(0,10);
+  $("cy-novo").style.display="block";
+  $("cy-n-banca").focus();
+};
+$("cy-n-cancelar").onclick = ()=> $("cy-novo").style.display="none";
+$("cy-n-criar").onclick = async ()=>{
+  const row = {
+    user_id:user.id, banca_id:bancaId,
+    numero: (db.ciclos.reduce((m,c)=>Math.max(m,+c.numero||0),0))+1,
+    banca_inicial:+$("cy-n-banca").value||0,
+    obj_jogo1:+$("cy-n-obj").value||0,
+    fator_reducao:+$("cy-n-fator").value||0,
+    stop_pct:+$("cy-n-stop").value||0,
+    data_inicio:$("cy-n-data").value||null
+  };
+  if(!row.banca_inicial){ toast("Informe a banca inicial do ciclo.", true); return; }
+  const { data, error } = await sb.from("ciclos").insert(row).select().single();
+  if(error) return sbErr(error,"criar o ciclo");
+  db.ciclos.push(data);
+  cicloAtivoId = data.id;
+  $("cy-novo").style.display="none";
+  toast(`Ciclo ${data.numero} criado.`);
+  renderCiclos();
+};
+
+/* ---- registrar/editar jogo ---- */
+function clearCyForm(){
+  cyEditId=null;
+  ["cy-jogo","cy-estr","cy-analise","cy-lucro"].forEach(id=>$(id).value="");
+  $("cy-f-title").textContent="Registrar jogo";
+  $("cy-save").textContent="Registrar jogo";
+  $("cy-cancel").style.display="none";
+}
+$("cy-cancel").onclick = clearCyForm;
+$("cy-save").onclick = async ()=>{
+  const c = cicloAtivo(); if(!c) return;
+  if($("cy-lucro").value===""){ toast("Informe o lucro do jogo (negativo para red).", true); return; }
+  const base = {
+    user_id:user.id, banca_id:bancaId, ciclo_id:c.id,
+    jogo:$("cy-jogo").value.trim(), estrategia:$("cy-estr").value.trim(),
+    analise:$("cy-analise").value.trim(), lucro:+$("cy-lucro").value||0
+  };
+  $("cy-save").disabled=true;
+  if(cyEditId){
+    const { data:upd, error } = await sb.from("ciclo_jogos").update(base).eq("id", cyEditId).eq("user_id", user.id).select().single();
+    $("cy-save").disabled=false;
+    if(error) return sbErr(error,"salvar o jogo");
+    db.cjogos = db.cjogos.map(j=> j.id===cyEditId? upd : j);
+    toast("Jogo atualizado.");
+  } else {
+    base.ordem = jogosDe(c.id).reduce((m,j)=>Math.max(m,+j.ordem||0),0)+1;
+    const { data:ins, error } = await sb.from("ciclo_jogos").insert(base).select().single();
+    $("cy-save").disabled=false;
+    if(error) return sbErr(error,"registrar o jogo");
+    db.cjogos.push(ins);
+    toast(`Jogo ${base.ordem} registrado.`);
+  }
+  clearCyForm(); renderCiclos();
+};
+window.editCyJogo = id=>{
+  const j=db.cjogos.find(x=>x.id===id); if(!j) return;
+  cyEditId=id;
+  $("cy-jogo").value=j.jogo||""; $("cy-estr").value=j.estrategia||"";
+  $("cy-analise").value=j.analise||""; $("cy-lucro").value=j.lucro;
+  $("cy-f-title").textContent=`Editando jogo ${j.ordem}`;
+  $("cy-save").textContent="Salvar alterações";
+  $("cy-cancel").style.display="inline-block";
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+window.delCyJogo = async id=>{
+  if(!confirm("Excluir este jogo? Os cálculos das linhas seguintes serão refeitos.")) return;
+  const { error } = await sb.from("ciclo_jogos").delete().eq("id", id).eq("user_id", user.id);
+  if(error) return sbErr(error,"excluir o jogo");
+  db.cjogos = db.cjogos.filter(j=>j.id!==id);
+  toast("Jogo excluído.");
+  renderCiclos();
+};
+
+/* ---- parâmetros do ciclo ---- */
+$("cy-p-save").onclick = async ()=>{
+  const c = cicloAtivo(); if(!c) return;
+  const upd = {
+    banca_inicial:+$("cy-p-banca").value||0,
+    obj_jogo1:+$("cy-p-obj").value||0,
+    fator_reducao:+$("cy-p-fator").value||0,
+    stop_pct:+$("cy-p-stop").value||0,
+    data_inicio:$("cy-p-ini").value||null,
+    data_fim:$("cy-p-fim").value||null,
+    saque:+$("cy-p-saque").value||0,
+    saque_data:$("cy-p-saqued").value||null
+  };
+  const { data, error } = await sb.from("ciclos").update(upd).eq("id", c.id).eq("user_id", user.id).select().single();
+  if(error) return sbErr(error,"salvar os parâmetros do ciclo");
+  db.ciclos = db.ciclos.map(x=> x.id===c.id? data : x);
+  toast("Parâmetros do ciclo salvos.");
+  renderCiclos();
+};
+$("cy-p-del").onclick = async ()=>{
+  const c = cicloAtivo(); if(!c) return;
+  const n = jogosDe(c.id).length;
+  if(!confirm(`Excluir o Ciclo ${c.numero}${n?` e seus ${n} jogos`:""}? Esta ação não pode ser desfeita.`)) return;
+  const { error } = await sb.from("ciclos").delete().eq("id", c.id).eq("user_id", user.id);
+  if(error) return sbErr(error,"excluir o ciclo");
+  db.cjogos = db.cjogos.filter(j=>j.ciclo_id!==c.id);
+  db.ciclos = db.ciclos.filter(x=>x.id!==c.id);
+  cicloAtivoId = db.ciclos.length? db.ciclos[db.ciclos.length-1].id : null;
+  toast("Ciclo excluído.");
+  renderCiclos();
+};
+
+/* ---- render ---- */
+function renderCicloEntradas(){
+  renderChips();
+  const c = cicloAtivo();
+  if(!c) return;
+  const cc = calcCiclo(c);
+  $("cy-cards").innerHTML = `
+    <div class="card"><div class="k">Ciclo ${c.numero} · Banca inicial</div><div class="v">${fmt(+c.banca_inicial||0)}</div><div class="s">início ${c.data_inicio? dBR(c.data_inicio)+"/"+String(c.data_inicio).slice(0,4):"—"}</div></div>
+    <div class="card"><div class="k">Objetivo do ciclo</div><div class="v">${fmt(cc.objetivoCiclo)}</div><div class="s">${cc.concluido? '<span class="pos">Concluído ✓</span>' : "Em aberto"}</div></div>
+    <div class="card"><div class="k">Lucro do ciclo</div><div class="v ${cls(cc.lucro)}">${(cc.lucro>0?"+":"")+fmt(cc.lucro)}</div><div class="s">${(cc.lucroPct>0?"+":"")+pct(cc.lucroPct)} sobre a banca do ciclo</div></div>
+    <div class="card"><div class="k">Banca final</div><div class="v">${fmt(cc.bancaFinal)}</div><div class="s">resíduo total ${fmt(cc.residuo)}${+c.saque? " · saque "+fmt(+c.saque):""}</div></div>`;
+  $("cy-next").innerHTML = cc.concluido
+    ? `<div><div class="k">Ciclo concluído 🎉</div><div style="color:var(--mut);font-size:13.5px;margin-top:4px">Banca final ${fmt(cc.bancaFinal)} ≥ objetivo ${fmt(cc.objetivoCiclo)}. Registre o saque nos parâmetros e crie o próximo ciclo.</div></div>`
+    : `<div><div class="k">Próximo jogo · nº ${cc.next.n}</div></div>
+       <div><div class="k">Entrar com</div><div class="v">${fmt(cc.next.D)}</div></div>
+       <div><div class="k">Objetivo do jogo</div><div class="v">${fmt(cc.next.F)}</div></div>
+       <div><div class="k">% objetivo</div><div class="v">${pct(cc.next.K)}</div></div>
+       <div><div class="k">Banca teórica</div><div class="v">${fmt(cc.next.E)}</div></div>`;
+  $("cy-tbody").innerHTML = cc.rows.length? cc.rows.map(r=>`
+    <tr class="${r.H>0?"g":(r.H<0?"r":"")}">
+      <td class="mono">${r.n}${r.cruzou?' <span class="chip st-green">OK</span>':""}</td>
+      <td>${esc(r.jogo.jogo)||"—"}${r.jogo.analise?`<div style="font-size:11.5px;color:var(--dim)">${esc(r.jogo.analise)}</div>`:""}</td>
+      <td>${r.jogo.estrategia?`<span class="chip ${/lay/i.test(r.jogo.estrategia)?"lay":"back"}">${esc(r.jogo.estrategia)}</span>`:"—"}</td>
+      <td class="num">${fmt(r.D)}</td>
+      <td class="num" style="color:var(--dim)">${fmt(r.E)}</td>
+      <td class="num">${fmt(r.F)}</td>
+      <td class="num" style="color:var(--dim)">${fmt(r.G)}</td>
+      <td class="num ${cls(r.H)}">${(r.H>0?"+":"")+fmt(r.H)}</td>
+      <td class="num ${cls(r.I)}">${(r.I>0?"+":"")+pct(r.I)}</td>
+      <td class="num ${cls(r.J)}">${fmt(r.J)}</td>
+      <td><div class="rowactions">
+        <button class="iconbtn" onclick="editCyJogo('${r.jogo.id}')">Editar</button>
+        <button class="iconbtn" onclick="delCyJogo('${r.jogo.id}')">Excluir</button></div></td>
+    </tr>`).join("")
+    : `<tr><td colspan="11" class="empty">Nenhum jogo registrado neste ciclo.</td></tr>`;
+  /* lucro por estratégia do ciclo */
+  const m = new Map();
+  cc.rows.forEach(r=>{
+    const k=r.jogo.estrategia||"Sem estratégia";
+    if(!m.has(k)) m.set(k,{n:0,pl:0});
+    const o=m.get(k); o.n++; o.pl+=r.H;
+  });
+  $("cy-estr-tbody").innerHTML = m.size? [...m.entries()].sort((a,b)=>b[1].pl-a[1].pl).map(([n,o])=>
+    `<tr><td>${esc(n)}</td><td class="num">${o.n}</td><td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("")
+    : `<tr><td colspan="3" class="empty">Sem jogos ainda.</td></tr>`;
+  /* parâmetros */
+  $("cy-p-banca").value=c.banca_inicial; $("cy-p-obj").value=c.obj_jogo1;
+  $("cy-p-fator").value=c.fator_reducao; $("cy-p-stop").value=c.stop_pct;
+  $("cy-p-ini").value=c.data_inicio||""; $("cy-p-fim").value=c.data_fim||"";
+  $("cy-p-saque").value=c.saque||""; $("cy-p-saqued").value=c.saque_data||"";
+}
+function renderCicloPainel(){
+  if(!$("yp-banca")) return;
+  const b = banca();
+  const lucro = db.cjogos.reduce((sm,j)=>sm+(+j.lucro||0),0);
+  const calcs = db.ciclos.map(c=>({c, cc:calcCiclo(c)}));
+  const done = calcs.filter(x=>x.cc.concluido).length;
+  const saques = db.ciclos.reduce((sm,c)=>sm+(+c.saque||0),0);
+  $("yp-nome").textContent = `${b.nome} · Método de Ciclos`;
+  $("yp-banca").textContent = fmt(ciclosBancaAtual());
+  $("yp-banca").className = "big "+cls(lucro);
+  $("yp-sub").textContent = `Inicial ${fmt(+b.inicial||0)} · ${db.ciclos.length} ciclo${db.ciclos.length===1?"":"s"} · ${db.cjogos.length} jogo${db.cjogos.length===1?"":"s"}`;
+  const e=$("yp-pl"); e.textContent=(lucro>0?"+":"")+fmt(lucro); e.className="v "+cls(lucro);
+  const p = b.inicial>0? lucro/b.inicial : 0;
+  const e2=$("yp-pct"); e2.textContent=(p>0?"+":"")+pct(p); e2.className="v "+cls(p);
+  $("yp-done").textContent = `${done} / ${db.ciclos.length}`;
+  $("yp-saq").textContent = fmt(saques);
+  $("yp-ciclos").innerHTML = calcs.length? calcs.map(({c,cc})=>
+    `<tr><td><b>Ciclo ${c.numero}</b></td>
+      <td class="mono">${c.data_inicio? dBR(c.data_inicio)+"/"+String(c.data_inicio).slice(0,4):"—"}</td>
+      <td class="num">${fmt(+c.banca_inicial||0)}</td>
+      <td class="num">${fmt(cc.objetivoCiclo)}</td>
+      <td class="num">${cc.rows.length}</td>
+      <td class="num ${cls(cc.lucro)}">${(cc.lucro>0?"+":"")+fmt(cc.lucro)}</td>
+      <td class="num ${cls(cc.lucroPct)}">${(cc.lucroPct>0?"+":"")+pct(cc.lucroPct)}</td>
+      <td class="num">${fmt(cc.bancaFinal)}</td>
+      <td>${cc.concluido? '<span class="chip st-green">Concluído</span>':'<span class="chip st-pendente">Em aberto</span>'}</td></tr>`).join("")
+    : `<tr><td colspan="9" class="empty">Nenhum ciclo criado — comece pela aba Entradas.</td></tr>`;
+  const m = new Map();
+  db.cjogos.forEach(j=>{
+    const k=j.estrategia||"Sem estratégia";
+    if(!m.has(k)) m.set(k,{n:0,pl:0});
+    const o=m.get(k); o.n++; o.pl+= +j.lucro||0;
+  });
+  $("yp-estr").innerHTML = m.size? [...m.entries()].sort((a,b)=>b[1].pl-a[1].pl).map(([n,o])=>
+    `<tr><td>${esc(n)}</td><td class="num">${o.n}</td>
+      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td>
+      <td class="num ${cls(o.pl)}">${o.n? (o.pl/o.n>0?"+":"")+fmt(o.pl/o.n):"—"}</td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">Sem jogos registrados.</td></tr>`;
+}
+function renderCiclos(){ if(tipoAtivo()!=="ciclos") return; renderCicloEntradas(); renderCicloPainel(); }
+function fillEstrCiclos(){
+  const set2 = new Set([...CICLOS_ESTRATEGIAS, ...cad.estrategias.map(i=>i.nome)]);
+  $("dl-estr-ciclos").innerHTML = [...set2].map(v=>`<option value="${esc(v)}">`).join("");
+}
+
 /* ============ Boot ============ */
-function renderAll(){ renderPainel(); renderDashboard(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); renderCasa(); }
+function renderAll(){ renderPainel(); renderDashboard(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); renderCasa(); renderCiclos(); }
 $("s-versao").textContent = APP_VERSAO;
 document.querySelector(".login-card p.sub").insertAdjacentHTML("beforeend", ` <span class="mono" style="color:var(--dim);font-size:11px">· ${APP_VERSAO}</span>`);
 clearForm();
