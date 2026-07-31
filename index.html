@@ -222,11 +222,25 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div class="panel">
       <h2>Criar nova banca</h2>
       <div class="field" style="margin-bottom:13px"><label>Nome da banca</label><input id="nb-nome" placeholder="Ex.: Banca Talita"></div>
+      <div class="field" style="margin-bottom:13px"><label>Tipo de gestão</label>
+        <select id="nb-tipo">
+          <option value="bolsa">Bolsa de Aposta (exchange)</option>
+          <option value="ciclos">Método de Ciclos</option>
+          <option value="casa">Casa de Aposta</option>
+        </select></div>
       <div class="field" style="margin-bottom:13px"><label>Banca inicial (R$)</label><input type="number" step="0.01" id="nb-inicial" value="300"></div>
       <div class="field" style="margin-bottom:13px"><label>Gestão · % da banca por stake</label><input type="number" step="0.1" id="nb-gestao" value="2"></div>
       <button class="btn" id="nb-criar">Criar banca</button>
       <p class="hint">Cada banca funciona como uma planilha separada: tem suas próprias entradas, levantamentos, análises e gestão.</p>
     </div>
+  </div>
+</section>
+
+<section id="tab-modo" class="tab">
+  <div class="panel" style="text-align:center;padding:50px 24px">
+    <div style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700" id="modo-tipo"></div>
+    <div style="font-size:22px;font-weight:800;margin:10px 0 8px" id="modo-nome"></div>
+    <p style="color:var(--mut);max-width:520px;margin:0 auto;line-height:1.6">O layout deste tipo de gestão ainda está em definição. As abas Banca, Cadastros e Configuração já funcionam normalmente para esta banca — em breve o painel e o registro de entradas específicos deste método estarão aqui.</p>
   </div>
 </section>
 
@@ -405,8 +419,14 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 <section id="tab-config" class="tab">
   <div class="panel">
     <h2>Banca ativa</h2>
-    <div class="cfg" style="grid-template-columns:repeat(4,1fr);max-width:860px">
+    <div class="cfg" style="grid-template-columns:repeat(5,1fr);max-width:1020px">
       <div><label>Nome da banca</label><input id="c-nome"></div>
+      <div><label>Tipo de gestão</label>
+        <select id="c-tipo">
+          <option value="bolsa">Bolsa de Aposta</option>
+          <option value="ciclos">Método de Ciclos</option>
+          <option value="casa">Casa de Aposta</option>
+        </select></div>
       <div><label>Banca inicial (R$)</label><input type="number" step="0.01" id="c-inicial"></div>
       <div><label>Gestão · % da banca por stake</label><input type="number" step="0.1" id="c-gestao"></div>
       <div style="align-self:end"><button class="btn" id="c-save">Salvar</button></div>
@@ -457,7 +477,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v6";
+const APP_VERSAO = "v7";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -485,6 +505,8 @@ const CAD_TABLES = { equipes:"cad_equipes", paises:"cad_paises", campeonatos:"ca
 const CAD_LABELS = { equipes:"Equipes", paises:"Países", campeonatos:"Campeonatos", mercados:"Mercados", estrategias:"Estratégias" };
 const CAD_PLACEHOLDER = { equipes:"Nome da equipe", paises:"Nome do país", campeonatos:"Nome do campeonato", mercados:"Nome do mercado", estrategias:"Nome da estratégia" };
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const TIPOS_GESTAO = { bolsa:"Bolsa de Aposta", ciclos:"Método de Ciclos", casa:"Casa de Aposta" };
+const tipoAtivo = ()=> banca().tipo || "bolsa";
 
 /* ============ Estado ============ */
 let user = null;
@@ -558,10 +580,17 @@ async function entrar(u){
     await selecionarBanca(bancaId, true);
   }
 }
+const ABAS_BOLSA = ["painel","dashboard","entradas","analises"];
 function irParaAba(nome){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on", b.dataset.tab===nome));
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
-  $("tab-"+nome).classList.add("on");
+  if(tipoAtivo()!=="bolsa" && ABAS_BOLSA.includes(nome)){
+    $("modo-tipo").textContent = TIPOS_GESTAO[tipoAtivo()];
+    $("modo-nome").textContent = banca().nome;
+    $("tab-modo").classList.add("on");
+  } else {
+    $("tab-"+nome).classList.add("on");
+  }
 }
 $("l-entrar").onclick = async ()=>{
   const email=$("l-email").value.trim(), senha=$("l-senha").value;
@@ -608,6 +637,8 @@ async function selecionarBanca(id, primeiro){
   $("loading").style.display="none";
   $("app").style.display="block";
   fillDatalists(); fillMesAnoSelects(); renderAll();
+  const abaOn = document.querySelector("nav button.on")?.dataset.tab || "painel";
+  irParaAba(abaOn);
 }
 async function loadBancaData(){
   try{
@@ -649,7 +680,7 @@ function renderBancaTab(){
     return `<div class="bcard ${ativa?"ativa":""}">
       <div>
         <div class="bn">${esc(b.nome)} ${ativa?'<span class="badge">· ativa</span>':""}</div>
-        <div class="bi">Inicial ${fmt(+b.inicial||0)} · Gestão ${b.gestao}% · ${r.n} entrada${r.n===1?"":"s"}</div>
+        <div class="bi"><span class="chip ${ (b.tipo||"bolsa")==="bolsa"?"back":((b.tipo)==="ciclos"?"live":"lay")}" style="margin-right:6px">${TIPOS_GESTAO[b.tipo||"bolsa"]}</span>Inicial ${fmt(+b.inicial||0)} · Gestão ${b.gestao}% · ${r.n} entrada${r.n===1?"":"s"}</div>
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <div class="bs ${cls(r.pl)}">${fmt(saldo)}</div>
@@ -668,12 +699,12 @@ $("nb-criar").onclick = async ()=>{
   if(!nome){ toast("Dê um nome à banca.", true); return; }
   if(bancas.some(b=>b.nome.toLowerCase()===nome.toLowerCase())){ toast("Já existe uma banca com este nome.", true); return; }
   $("nb-criar").disabled=true;
-  const row = { user_id:user.id, nome, inicial:+$("nb-inicial").value||0, gestao:+$("nb-gestao").value||0 };
+  const row = { user_id:user.id, nome, tipo:$("nb-tipo").value, inicial:+$("nb-inicial").value||0, gestao:+$("nb-gestao").value||0 };
   const { data, error } = await sb.from("bancas").insert(row).select().single();
   $("nb-criar").disabled=false;
   if(error) return sbErr(error,"criar a banca");
   bancas.push(data);
-  $("nb-nome").value=""; $("nb-inicial").value="300"; $("nb-gestao").value="2";
+  $("nb-nome").value=""; $("nb-tipo").value="bolsa"; $("nb-inicial").value="300"; $("nb-gestao").value="2";
   toast(`Banca "${nome}" criada e selecionada.`);
   await selecionarBanca(data.id, false);
   irParaAba("painel");
@@ -820,7 +851,7 @@ function renderPainel(){
   const pl = plOf(bets);
   const greens = bets.filter(x=>+x.pl>0).length, reds = bets.filter(x=>+x.pl<0).length;
 
-  $("p-nome").textContent = b.nome;
+  $("p-nome").textContent = `${b.nome} · ${TIPOS_GESTAO[b.tipo||"bolsa"]}`;
   $("p-banca").textContent = fmt(saldo);
   $("p-banca").className = "big "+cls(pl);
   $("p-banca-sub").textContent = `Inicial ${fmt(+b.inicial||0)} · ${bets.length} entrada${bets.length===1?"":"s"} registradas`;
@@ -1211,6 +1242,7 @@ function renderDashboard(){
 function renderConfig(){
   const b = banca();
   $("c-nome").value = b.nome;
+  $("c-tipo").value = b.tipo || "bolsa";
   $("c-inicial").value = b.inicial;
   $("c-gestao").value = b.gestao;
   $("m-banca").textContent = b.nome;
@@ -1225,9 +1257,10 @@ function renderConfig(){
 }
 $("c-save").onclick = async ()=>{
   const nome = $("c-nome").value.trim() || banca().nome;
+  const tipo = $("c-tipo").value;
   const inicial = +$("c-inicial").value || 0;
   const gestao = +$("c-gestao").value || 0;
-  const { data, error } = await sb.from("bancas").update({ nome, inicial, gestao }).eq("id", bancaId).eq("user_id", user.id).select().single();
+  const { data, error } = await sb.from("bancas").update({ nome, tipo, inicial, gestao }).eq("id", bancaId).eq("user_id", user.id).select().single();
   if(error) return sbErr(error,"salvar os parâmetros");
   bancas = bancas.map(b=> b.id===bancaId? data : b);
   renderBancaSel();
