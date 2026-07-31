@@ -692,7 +692,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v9";
+const APP_VERSAO = "v10";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -991,6 +991,15 @@ async function loadCadastros(){
       cad[key] = (data||[]).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
     }catch(e){ sbErr(e,"carregar cadastro de "+CAD_LABELS[key]); cad[key]=[]; }
   }
+  /* garante os mercados de estatística de jogador no cadastro */
+  try{
+    const faltam = PROP_MERCADOS.filter(n=> !cad.mercados.some(i=>i.nome.toLowerCase()===n.toLowerCase()));
+    if(faltam.length){
+      const { data } = await sb.from("cad_mercados").upsert(faltam.map(nome=>({user_id:user.id, nome})), {onConflict:"user_id,nome", ignoreDuplicates:true}).select();
+      (data||[]).forEach(d=>cad.mercados.push(d));
+      cad.mercados.sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+    }
+  }catch(e){ console.error("backfill mercados", e); }
   /* classifica automaticamente campeonatos conhecidos que ainda não têm país */
   try{
     const sem = cad.campeonatos.filter(c=> !(c.pais||"").trim() && COMP_PAIS[c.nome]);
@@ -1617,9 +1626,13 @@ $("io-wipe").onclick = async ()=>{
 /* ============ Casa de Aposta ============ */
 const ESPORTES = ["Futebol","Basquete","Tênis","Vôlei","MMA","E-Sports","Futebol Americano","Beisebol","Corrida","Outro"];
 const CASA_ESTADOS = { pendente:"Pendente", green:"Green", red:"Red", anulada:"Anulada", cashout:"Cashout" };
+const PROP_MERCADOS = ["Chutes","Chutes ao Gol","Desarmes","Defesas do Goleiro","Passes","Finalizações"];
+const POSICOES = ["Goleiro","Zagueiro","Lateral","Volante","Meio-campista","Atacante"];
+const LINHAS = ["0.5","1.5","2.5","3.5","4.5","5.5","6.5","7.5","8.5"];
+const isProp = x => /chute|desarme|defesa|passe|finaliza/i.test(x.tipo||"");
 let casaSels = [];
 let casaEditId = null;
-const novaSel = ()=>({ titulo:"", cotacao:"", esporte:"Futebol", estado:"pendente", competicao:"", tipo:"", categoria:"", closing:"", proba:"", det:false });
+const novaSel = ()=>({ titulo:"", cotacao:"", esporte:"Futebol", estado:"pendente", competicao:"", tipo:"", categoria:"", closing:"", proba:"", jogador:"", clube:"", posicao:"", linha_ou:"over", linha:"", det:false });
 
 function oddTotalDe(sels){
   const odds = (sels||[]).map(x=>+x.cotacao).filter(v=>v>0);
@@ -1644,12 +1657,18 @@ function renderSels(){
    <div class="selcard">
     <div class="selhead"><b>Seleção ${i+1}</b>${casaSels.length>1?`<button class="iconbtn" onclick="delSel(${i})">Remover</button>`:""}</div>
     <div class="formgrid">
-      <div class="c4"><label>Título da aposta</label><input data-i="${i}" data-k="titulo" value="${esc(x.titulo)}" placeholder="Ex.: Real Madrid - Bayern Munich"></div>
+      <div class="c4"><label>Jogo</label><input data-i="${i}" data-k="titulo" value="${esc(x.titulo)}" placeholder="Ex.: Time A × Time B"></div>
       <div class="c2"><label>Cotação</label><input type="number" step="0.01" min="1" data-i="${i}" data-k="cotacao" value="${esc(x.cotacao)}" placeholder="Ex.: 1,50"></div>
       <div class="c2"><label>Esporte</label><select data-i="${i}" data-k="esporte">${ESPORTES.map(e=>`<option ${e===x.esporte?"selected":""}>${e}</option>`).join("")}</select></div>
       <div class="c2"><label>Estado</label><select data-i="${i}" data-k="estado">${["pendente","green","red","anulada"].map(k=>`<option value="${k}" ${k===x.estado?"selected":""}>${CASA_ESTADOS[k]}</option>`).join("")}</select></div>
-      <div class="c2"><label>Tipo de aposta</label><input list="dl-merc" data-i="${i}" data-k="tipo" value="${esc(x.tipo)}" placeholder="Ex.: Ambas Marcam"></div>
+      <div class="c2"><label>Tipo de aposta</label><input list="dl-merc" data-i="${i}" data-k="tipo" value="${esc(x.tipo)}" placeholder="Ex.: Chutes, Ambas Marcam"></div>
       <div class="c3"><label>Competição</label><input list="dl-comp-all" data-i="${i}" data-k="competicao" value="${esc(x.competicao)}" placeholder="Ex.: Champions League"></div>
+      ${isProp(x)?`
+      <div class="c3"><label>Jogador</label><input data-i="${i}" data-k="jogador" value="${esc(x.jogador)}" placeholder="Ex.: Vini Jr"></div>
+      <div class="c3"><label>Clube</label><input list="dl-times" data-i="${i}" data-k="clube" value="${esc(x.clube)}" placeholder="Ex.: Real Madrid"></div>
+      <div class="c2"><label>Posição</label><select data-i="${i}" data-k="posicao"><option value="">—</option>${POSICOES.map(p=>`<option ${p===x.posicao?"selected":""}>${p}</option>`).join("")}</select></div>
+      <div class="c2"><label>Over / Under</label><select data-i="${i}" data-k="linha_ou"><option value="over" ${x.linha_ou!=="under"?"selected":""}>Over (mais de)</option><option value="under" ${x.linha_ou==="under"?"selected":""}>Under (menos de)</option></select></div>
+      <div class="c2"><label>Linha</label><select data-i="${i}" data-k="linha"><option value="">—</option>${LINHAS.map(l=>`<option ${l===String(x.linha)?"selected":""}>${l}</option>`).join("")}</select></div>`:""}
       ${x.det?`
       <div class="c3"><label>Categoria</label><input data-i="${i}" data-k="categoria" value="${esc(x.categoria)}" placeholder="Ex.: Gols"></div>
       <div class="c2"><label>Closing Odds</label><input type="number" step="0.01" data-i="${i}" data-k="closing" value="${esc(x.closing)}" placeholder="Ex.: 1,50"></div>
@@ -1658,7 +1677,13 @@ function renderSels(){
     </div>
    </div>`).join("");
   box.querySelectorAll("input,select").forEach(el=>{
-    el.addEventListener("input", ()=>{ casaSels[+el.dataset.i][el.dataset.k] = el.value; atualizarOdd(); });
+    el.addEventListener("input", ()=>{
+      const i=+el.dataset.i, k=el.dataset.k;
+      const antes = isProp(casaSels[i]);
+      casaSels[i][k] = el.value;
+      if(k==="tipo" && isProp(casaSels[i])!==antes){ renderSels(); box.querySelector(`[data-i="${i}"][data-k="tipo"]`)?.focus(); return; }
+      atualizarOdd();
+    });
   });
   atualizarOdd();
 }
@@ -1794,7 +1819,17 @@ function renderCasaEntradas(){
   $("cs-tbody").innerHTML = list.length? [...list].reverse().map(b=>{
     const sels=b.selecoes||[];
     const titulo = sels.length? esc(sels[0].titulo) + (sels.length>1?` <span class="chip live">+${sels.length-1}</span>`:"") : "—";
-    const detalhe = sels.length? `<div style="font-size:11.5px;color:var(--dim)">${sels.map(x=>[x.tipo,x.competicao].filter(Boolean).join(" · ")).filter(Boolean).join(" | ")||""}${b.obs?` — ${esc(b.obs)}`:""}</div>`:"";
+    const selDesc = x=>{
+      const partes=[];
+      if(x.jogador){
+        partes.push(`${esc(x.jogador)}${x.clube?` (${esc(x.clube)}${x.posicao?` · ${esc(x.posicao)}`:""})`:""}${x.linha?` — ${x.linha_ou==="under"?"Under":"Over"} ${esc(x.linha)}`:""}${x.tipo?` ${esc(x.tipo)}`:""}`);
+      } else {
+        if(x.tipo) partes.push(esc(x.tipo));
+      }
+      if(x.competicao) partes.push(esc(x.competicao));
+      return partes.join(" · ");
+    };
+    const detalhe = sels.length? `<div style="font-size:11.5px;color:var(--dim)">${sels.map(selDesc).filter(Boolean).join(" | ")||""}${b.obs?` — ${esc(b.obs)}`:""}</div>`:"";
     const oddT=oddTotalDe(sels);
     const fLabel = b.formato==="multipla"? "Múltipla" : b.formato==="lay"? "Lay" : b.formato==="back"? "Back" : "Simples";
     return `<tr class="${b.estado==="green"?"g":(b.estado==="red"?"r":"")}">
