@@ -142,6 +142,16 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 .cad-item .x{background:none;border:none;color:var(--dim);font-size:14px;padding:2px 7px;border-radius:4px}
 .cad-item .x:hover{color:var(--red);background:var(--red-soft)}
 .cad-count{font-size:11px;color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none;margin-left:6px}
+.selcard{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--panel2)}
+.selhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px}
+.fmt{display:flex;gap:8px;flex-wrap:wrap}
+.fmt button{background:var(--bg);border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:9px 16px;font-weight:700;font-size:13.5px}
+.fmt button.on{border-color:var(--gold);color:var(--gold);background:rgba(233,184,76,.08)}
+.chip.st-pendente{background:rgba(141,160,179,.15);color:var(--mut)}
+.chip.st-green{background:var(--green-soft);color:var(--green)}
+.chip.st-red{background:var(--red-soft);color:var(--red)}
+.chip.st-anulada{background:rgba(92,110,128,.2);color:var(--dim)}
+.chip.st-cashout{background:rgba(127,185,230,.15);color:var(--back)}
 tr.grp td{background:var(--panel2);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
 tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
@@ -241,6 +251,93 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700" id="modo-tipo"></div>
     <div style="font-size:22px;font-weight:800;margin:10px 0 8px" id="modo-nome"></div>
     <p style="color:var(--mut);max-width:520px;margin:0 auto;line-height:1.6">O layout deste tipo de gestão ainda está em definição. As abas Banca, Cadastros e Configuração já funcionam normalmente para esta banca — em breve o painel e o registro de entradas específicos deste método estarão aqui.</p>
+  </div>
+</section>
+
+<!-- ============ CASA DE APOSTA: PAINEL ============ -->
+<section id="tab-casapainel" class="tab">
+  <div class="hero">
+    <div class="hero-banca">
+      <div class="eyebrow" id="cp-nome">Banca</div>
+      <div class="big" id="cp-banca">R$ 0,00</div>
+      <div class="sub" id="cp-sub">—</div>
+    </div>
+    <div class="cards">
+      <div class="card"><div class="k">Lucro / Prejuízo</div><div class="v" id="cp-pl">R$ 0,00</div><div class="s">apostas resolvidas</div></div>
+      <div class="card"><div class="k">Greens × Reds</div><div class="v" id="cp-gr">0 × 0</div><div class="s" id="cp-tx">taxa de acerto —</div></div>
+      <div class="card"><div class="k">Pendentes</div><div class="v" id="cp-pend">0</div><div class="s" id="cp-pendv">R$ 0,00 em jogo</div></div>
+      <div class="card"><div class="k">Stake sugerida</div><div class="v" id="cp-stake">R$ 0,00</div><div class="s" id="cp-stake-s">gestão da banca</div></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Últimas apostas</h2>
+    <table><thead><tr><th>Data</th><th>Casa</th><th>Aposta</th><th class="num">Odd</th><th class="num">Valor</th><th>Estado</th><th class="num">P/L</th></tr></thead>
+    <tbody id="cp-last"></tbody></table>
+  </div>
+</section>
+
+<!-- ============ CASA DE APOSTA: ENTRADAS ============ -->
+<section id="tab-casaentradas" class="tab">
+  <div class="panel">
+    <h2 id="cs-title">Adicionar aposta</h2>
+    <div class="formgrid" style="margin-bottom:14px">
+      <div class="c2"><label>Data</label><input type="date" id="cs-data"></div>
+      <div class="c2"><label>Hora</label><input type="time" id="cs-hora"></div>
+      <div class="c2"><label>Casa de apostas</label><input list="dl-casas" id="cs-casa" placeholder="Ex.: Bet365"></div>
+    </div>
+    <div id="cs-sels"></div>
+    <button class="btn ghost" id="cs-addsel" style="width:100%;margin-bottom:14px">➕ Adicionar uma seleção</button>
+    <div class="formgrid">
+      <div class="c6">
+        <label>Formato da aposta</label>
+        <div class="fmt">
+          <button data-f="simples" class="on">Simples</button>
+          <button data-f="back">A favor (Back)</button>
+          <button data-f="lay">Contra (Lay)</button>
+          <span style="align-self:center;color:var(--gold);font-size:13px;font-weight:700" id="cs-oddtotal"></span>
+        </div>
+      </div>
+      <div class="c2"><label>Valor (R$)</label><input type="number" step="0.01" id="cs-valor" placeholder="Ex.: 50"></div>
+      <div class="c2"><label>Aposta em % da banca</label>
+        <div style="display:flex;gap:6px">
+          <input type="number" step="0.1" id="cs-pct" placeholder="Ex.: 2">
+          <button class="btn ghost sm" id="cs-pct-ap" style="white-space:nowrap">Aplicar</button>
+        </div>
+      </div>
+      <div class="c2"><label>Estado da aposta</label>
+        <select id="cs-estado">
+          <option value="pendente">Pendente</option>
+          <option value="green">Green (ganha)</option>
+          <option value="red">Red (perdida)</option>
+          <option value="anulada">Anulada</option>
+          <option value="cashout">Cashout</option>
+        </select></div>
+      <div class="c2" id="cs-ret-wrap" style="display:none"><label>Valor recebido no cashout (R$)</label><input type="number" step="0.01" id="cs-retorno" placeholder="Ex.: 35"></div>
+      <div class="c4"><label>Observação</label><input id="cs-obs" placeholder="Anotações da aposta…"></div>
+      <div class="c6" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="cs-save">Adicionar aposta</button>
+        <button class="btn ghost" id="cs-cancel" style="display:none">Cancelar edição</button>
+        <span style="font-size:12.5px;color:var(--dim)" id="cs-retpot"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div><label>Mês</label><select id="cs-mes"></select></div>
+    <div><label>Ano</label><select id="cs-ano"></select></div>
+    <div style="flex:1;min-width:200px"><label>Buscar</label><input id="cs-busca" placeholder="casa, título, competição…"></div>
+  </div>
+
+  <div class="summary-strip" id="cs-strip"></div>
+
+  <div class="panel" style="padding:0;overflow-x:auto">
+    <table>
+      <thead><tr>
+        <th>Data</th><th>Casa</th><th>Aposta</th><th>Formato</th>
+        <th class="num">Odd</th><th class="num">Valor</th><th>Estado</th><th class="num">P/L</th><th></th>
+      </tr></thead>
+      <tbody id="cs-tbody"></tbody>
+    </table>
   </div>
 </section>
 
@@ -369,6 +466,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <button class="cad-mi" data-cad="campeonatos">Campeonatos</button>
       <button class="cad-mi" data-cad="mercados">Mercados</button>
       <button class="cad-mi" data-cad="estrategias">Estratégias</button>
+      <button class="cad-mi" data-cad="casas">Casas de Apostas</button>
     </aside>
     <div class="panel" style="flex:1;margin-bottom:0">
       <h2 id="cad-title">Equipes <span class="cad-count" id="cad-count"></span></h2>
@@ -470,6 +568,8 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 <div id="toast"></div>
 
 <datalist id="dl-comp"></datalist>
+<datalist id="dl-comp-all"></datalist>
+<datalist id="dl-casas"></datalist>
 <datalist id="dl-pais"></datalist>
 <datalist id="dl-times"></datalist>
 <datalist id="dl-forma"></datalist>
@@ -477,7 +577,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v7";
+const APP_VERSAO = "v8";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -488,7 +588,8 @@ const SEED = {
   mercados: ["Match Odds","Intervalo","Over e Under 0.5 HT","Over e Under 1.5 HT","Over e Under 2.5 HT","Over e Under 0.5","Over e Under 1.5","Over e Under 2.5","Over e Under 3.5","Over e Under 4.5","Over e Under 5.5","Resultado do Jogo","Resultado ao Intervalo","Handicap","Ambas Marcam","Empate Anula a Aposta","Chance Dupla","Placar Correto"],
   campeonatos: ["Brasileiro - Série A","Brasileiro - Série B","Copa do Brasil","Estaduais","Premier League","Championship","La Liga","La Liga 2","Serie A (Itália)","Bundesliga 1","Bundesliga 2","Ligue 1","Primeira Liga","Eredivisie","Champions League","Europa League","Copa Libertadores","Copa Sulamericana","MLS","Campeonato Argentino","Super Lig","Allsvenskan","Copa do Rei","Copa da Inglaterra","Copa da Liga","DFB Pokal","Amistosos","NBA"],
   equipes: ["Flamengo","Palmeiras","Corinthians","São Paulo","Santos","Botafogo","Vasco","Grêmio","Internacional","Atlético MG","Cruzeiro","Bahia","Fortaleza","Ceará","Sport","Mirassol","Liverpool","Man City","Man Utd","Arsenal","Chelsea","Tottenham","Newcastle","West Ham","Everton","Fulham","Brentford","Brighton","Wolverhampton","Nottingham","Bournemouth","Real Madrid","Barcelona","Atl Madrid","Sevilla","Betis","Real Sociedad","Bilbao","Alavés","Oviedo","AC Milan","Inter Milan","Juventus","Napoli","Roma","Lazio","Atalanta","Fiorentina","Genoa","Sassuolo","Bayern Munich","Dortmund","RB Leipzig","Bayer 04","Koln","Frankfurt","Paris St-G","Monaco","Lyon","Marseille","Nice","Porto","Benfica","Sporting","Braga","Ajax","PSV","Feyenoord","Celtic","Rangers","Galatasaray","Fenerbahce","Besiktas"],
-  paises: ["Brasil","Inglaterra","Espanha","Itália","Alemanha","França","Portugal","Holanda","Argentina","EUA","Turquia","Suécia","Rússia","Escócia","Bélgica","Grécia","México","Arábia Saudita","Japão","Coreia do Sul","América do Sul","Europa","Mundo"]
+  paises: ["Brasil","Inglaterra","Espanha","Itália","Alemanha","França","Portugal","Holanda","Argentina","EUA","Turquia","Suécia","Rússia","Escócia","Bélgica","Grécia","México","Arábia Saudita","Japão","Coreia do Sul","América do Sul","Europa","Mundo"],
+  casas: ["Bet365","Betano","Superbet","KTO","Sportingbet","Betfair","EstrelaBet","Pixbet","Novibet","Esportes da Sorte","BetMGM","Stake"]
 };
 const COMP_PAIS = {
   "Brasileiro - Série A":"Brasil","Brasileiro - Série B":"Brasil","Copa do Brasil":"Brasil","Estaduais":"Brasil",
@@ -501,9 +602,9 @@ const COMP_PAIS = {
   "Copa Libertadores":"América do Sul","Copa Sulamericana":"América do Sul",
   "MLS":"EUA","NBA":"EUA","Campeonato Argentino":"Argentina","Super Lig":"Turquia","Allsvenskan":"Suécia","Amistosos":"Mundo"
 };
-const CAD_TABLES = { equipes:"cad_equipes", paises:"cad_paises", campeonatos:"cad_campeonatos", mercados:"cad_mercados", estrategias:"cad_estrategias" };
-const CAD_LABELS = { equipes:"Equipes", paises:"Países", campeonatos:"Campeonatos", mercados:"Mercados", estrategias:"Estratégias" };
-const CAD_PLACEHOLDER = { equipes:"Nome da equipe", paises:"Nome do país", campeonatos:"Nome do campeonato", mercados:"Nome do mercado", estrategias:"Nome da estratégia" };
+const CAD_TABLES = { equipes:"cad_equipes", paises:"cad_paises", campeonatos:"cad_campeonatos", mercados:"cad_mercados", estrategias:"cad_estrategias", casas:"cad_casas" };
+const CAD_LABELS = { equipes:"Equipes", paises:"Países", campeonatos:"Campeonatos", mercados:"Mercados", estrategias:"Estratégias", casas:"Casas de Apostas" };
+const CAD_PLACEHOLDER = { equipes:"Nome da equipe", paises:"Nome do país", campeonatos:"Nome do campeonato", mercados:"Nome do mercado", estrategias:"Nome da estratégia", casas:"Nome da casa de apostas" };
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const TIPOS_GESTAO = { bolsa:"Bolsa de Aposta", ciclos:"Método de Ciclos", casa:"Casa de Aposta" };
 const tipoAtivo = ()=> banca().tipo || "bolsa";
@@ -512,8 +613,8 @@ const tipoAtivo = ()=> banca().tipo || "bolsa";
 let user = null;
 let bancas = [];
 let bancaId = null;
-let db = { bets:[], movs:[] };
-let cad = { equipes:[], paises:[], campeonatos:[], mercados:[], estrategias:[] };
+let db = { bets:[], movs:[], casa:[] };
+let cad = { equipes:[], paises:[], campeonatos:[], mercados:[], estrategias:[], casas:[] };
 let cadKey = "equipes";
 
 /* ============ Utilidades ============ */
@@ -543,6 +644,7 @@ function anosDisponiveis(){
   const s = new Set([new Date().getFullYear()]);
   db.bets.forEach(b=> s.add(+String(b.data).slice(0,4)));
   db.movs.forEach(m=> s.add(+String(m.data).slice(0,4)));
+  db.casa.forEach(b=> s.add(+String(b.data).slice(0,4)));
   return [...s].sort();
 }
 let toastT=null;
@@ -584,13 +686,19 @@ const ABAS_BOLSA = ["painel","dashboard","entradas","analises"];
 function irParaAba(nome){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on", b.dataset.tab===nome));
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
-  if(tipoAtivo()!=="bolsa" && ABAS_BOLSA.includes(nome)){
-    $("modo-tipo").textContent = TIPOS_GESTAO[tipoAtivo()];
-    $("modo-nome").textContent = banca().nome;
-    $("tab-modo").classList.add("on");
-  } else {
-    $("tab-"+nome).classList.add("on");
+  const t = tipoAtivo();
+  let alvo = "tab-"+nome;
+  if(t==="ciclos" && ABAS_BOLSA.includes(nome)) alvo = "tab-modo";
+  if(t==="casa"){
+    if(nome==="painel") alvo = "tab-casapainel";
+    else if(nome==="entradas") alvo = "tab-casaentradas";
+    else if(nome==="dashboard" || nome==="analises") alvo = "tab-modo";
   }
+  if(alvo==="tab-modo"){
+    $("modo-tipo").textContent = TIPOS_GESTAO[t];
+    $("modo-nome").textContent = banca().nome;
+  }
+  document.getElementById(alvo).classList.add("on");
 }
 $("l-entrar").onclick = async ()=>{
   const email=$("l-email").value.trim(), senha=$("l-senha").value;
@@ -651,18 +759,28 @@ async function loadBancaData(){
     if(error) throw error;
     db.movs = data||[];
   }catch(e){ sbErr(e,"carregar movimentações"); db.movs=[]; }
+  db.casa=[];
+  if(tipoAtivo()==="casa"){
+    try{
+      const { data, error } = await sb.from("casa_bets").select("*").eq("user_id", user.id).eq("banca_id", bancaId).limit(10000);
+      if(error) throw error;
+      db.casa = data||[];
+    }catch(e){ sbErr(e,"carregar apostas"); db.casa=[]; }
+  }
 }
 
 /* ---- Aba Banca: resumo de todas as bancas + criação ---- */
 let resumo = {};
 async function refreshResumo(){
   try{
-    const [b,m] = await Promise.all([
+    const [b,m,c] = await Promise.all([
       sb.from("banca_bets").select("banca_id,pl").eq("user_id",user.id).limit(20000),
-      sb.from("banca_movs").select("banca_id,tipo,valor").eq("user_id",user.id).limit(20000)
+      sb.from("banca_movs").select("banca_id,tipo,valor").eq("user_id",user.id).limit(20000),
+      sb.from("casa_bets").select("banca_id,pl").eq("user_id",user.id).limit(20000)
     ]);
     resumo = {};
     (b.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.pl+= +r.pl||0; o.n++; });
+    (c.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.pl+= +r.pl||0; o.n++; });
     (m.data||[]).forEach(r=>{ const o = resumo[r.banca_id] || (resumo[r.banca_id]={pl:0,mov:0,n:0}); o.mov+= r.tipo==="aporte"? +r.valor : -r.valor; });
   }catch(e){ console.error(e); }
   renderBancaTab();
@@ -954,6 +1072,8 @@ function fillDatalists(){
   set("dl-times","equipes", db.bets.flatMap(b=>[b.mand,b.vis]));
   set("dl-forma","estrategias", db.bets.map(b=>b.forma));
   set("dl-merc","mercados", db.bets.map(b=>b.mercado));
+  set("dl-casas","casas", db.casa.map(b=>b.casa));
+  $("dl-comp-all").innerHTML = cad.campeonatos.map(c=>`<option value="${esc(c.nome)}">`).join("");
 }
 /* competições sugeridas conforme o país selecionado */
 function updateCompList(){
@@ -981,13 +1101,13 @@ $("f-comp").addEventListener("change", ()=>{
 });
 function fillMesAnoSelects(){
   const anos = anosDisponiveis();
-  ["e","a","d"].forEach(px=>{
+  ["e","a","d","cs"].forEach(px=>{
     const sm=$(px+"-mes"), sa=$(px+"-ano");
     const vm=sm.value, va=sa.value;
     sm.innerHTML = `<option value="all">Todos os meses</option>` + MESES.map((n,i)=>`<option value="${i+1}">${n}</option>`).join("");
     sa.innerHTML = anos.map(a=>`<option>${a}</option>`).join("");
     if(vm) sm.value=vm; if(va && anos.includes(+va)) sa.value=va; else sa.value=anos[anos.length-1];
-    if(!vm && px==="e") sm.value = String(new Date().getMonth()+1);
+    if(!vm && (px==="e"||px==="cs")) sm.value = String(new Date().getMonth()+1);
   });
 }
 function filteredBets(px){
@@ -1265,7 +1385,7 @@ $("c-save").onclick = async ()=>{
   bancas = bancas.map(b=> b.id===bancaId? data : b);
   renderBancaSel();
   toast("Parâmetros salvos.");
-  renderAll();
+  await selecionarBanca(bancaId, false);
 };
 $("m-add").onclick = async ()=>{
   const data=$("m-data").value, valor=+$("m-valor").value;
@@ -1290,7 +1410,7 @@ window.delMov = async id=>{
 /* ============ Backup ============ */
 $("io-export").onclick = ()=>{
   const b = banca();
-  const out = { banca:b.nome, config:{inicial:b.inicial, gestao:b.gestao}, bets:db.bets, movs:db.movs };
+  const out = { banca:b.nome, tipo:b.tipo||"bolsa", config:{inicial:b.inicial, gestao:b.gestao}, bets:db.bets, movs:db.movs, casa:db.casa };
   const blob = new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
@@ -1325,6 +1445,14 @@ $("io-file").onchange = e=>{
         const { error } = await sb.from("banca_movs").insert(movs);
         if(error) throw error;
       }
+      if(Array.isArray(d.casa) && d.casa.length){
+        await sb.from("casa_bets").delete().eq("user_id", user.id).eq("banca_id", bancaId);
+        const cb = d.casa.map(x=>({ user_id:user.id, banca_id:bancaId, data:x.data, hora:x.hora||null, casa:x.casa||"", formato:x.formato||"simples", valor:+x.valor||0, estado:x.estado||"pendente", retorno:x.retorno??null, pl:+x.pl||0, obs:x.obs||"", selecoes:x.selecoes||[] }));
+        for(let i=0;i<cb.length;i+=200){
+          const { error } = await sb.from("casa_bets").insert(cb.slice(i,i+200));
+          if(error) throw error;
+        }
+      }
       await sb.from("bancas").update({ inicial:+d.config.inicial||0, gestao:+d.config.gestao||0 }).eq("id", bancaId).eq("user_id", user.id);
       await loadBancas();
       await loadBancaData();
@@ -1349,11 +1477,248 @@ $("io-wipe").onclick = async ()=>{
   fillDatalists(); fillMesAnoSelects(); renderAll();
 };
 
+
+/* ============ Casa de Aposta ============ */
+const ESPORTES = ["Futebol","Basquete","Tênis","Vôlei","MMA","E-Sports","Futebol Americano","Beisebol","Corrida","Outro"];
+const CASA_ESTADOS = { pendente:"Pendente", green:"Green", red:"Red", anulada:"Anulada", cashout:"Cashout" };
+let casaSels = [];
+let casaEditId = null;
+const novaSel = ()=>({ titulo:"", cotacao:"", esporte:"Futebol", estado:"pendente", competicao:"", tipo:"", categoria:"", closing:"", proba:"", det:false });
+
+function oddTotalDe(sels){
+  const odds = (sels||[]).map(x=>+x.cotacao).filter(v=>v>0);
+  return odds.length? odds.reduce((a,b)=>a*b,1) : null;
+}
+function casaPL(bet){
+  const oddT = oddTotalDe(bet.selecoes)||1;
+  const v = +bet.valor||0;
+  if(bet.estado==="green")   return bet.formato==="lay" ? v : v*(Math.max(oddT,1)-1);
+  if(bet.estado==="red")     return bet.formato==="lay" ? -v*(Math.max(oddT,1)-1) : -v;
+  if(bet.estado==="cashout") return (+bet.retorno||0)-v;
+  return 0; /* pendente e anulada */
+}
+function casaBancaAtual(){
+  return (+banca().inicial||0) + db.casa.reduce((s,b)=>s+(+b.pl||0),0) + movsUntil(()=>true);
+}
+window.toggleDet = i=>{ casaSels[i].det=!casaSels[i].det; renderSels(); };
+window.delSel = i=>{ casaSels.splice(i,1); if(!casaSels.length) casaSels.push(novaSel()); renderSels(); };
+function renderSels(){
+  const box=$("cs-sels");
+  box.innerHTML = casaSels.map((x,i)=>`
+   <div class="selcard">
+    <div class="selhead"><b>Seleção ${i+1}</b>${casaSels.length>1?`<button class="iconbtn" onclick="delSel(${i})">Remover</button>`:""}</div>
+    <div class="formgrid">
+      <div class="c4"><label>Título da aposta</label><input data-i="${i}" data-k="titulo" value="${esc(x.titulo)}" placeholder="Ex.: Real Madrid - Bayern Munich"></div>
+      <div class="c2"><label>Cotação</label><input type="number" step="0.01" min="1" data-i="${i}" data-k="cotacao" value="${esc(x.cotacao)}" placeholder="Ex.: 1,50"></div>
+      <div class="c2"><label>Esporte</label><select data-i="${i}" data-k="esporte">${ESPORTES.map(e=>`<option ${e===x.esporte?"selected":""}>${e}</option>`).join("")}</select></div>
+      <div class="c2"><label>Estado</label><select data-i="${i}" data-k="estado">${["pendente","green","red","anulada"].map(k=>`<option value="${k}" ${k===x.estado?"selected":""}>${CASA_ESTADOS[k]}</option>`).join("")}</select></div>
+      <div class="c2"><label>Tipo de aposta</label><input list="dl-merc" data-i="${i}" data-k="tipo" value="${esc(x.tipo)}" placeholder="Ex.: Ambas Marcam"></div>
+      <div class="c3"><label>Competição</label><input list="dl-comp-all" data-i="${i}" data-k="competicao" value="${esc(x.competicao)}" placeholder="Ex.: Champions League"></div>
+      ${x.det?`
+      <div class="c3"><label>Categoria</label><input data-i="${i}" data-k="categoria" value="${esc(x.categoria)}" placeholder="Ex.: Gols"></div>
+      <div class="c2"><label>Closing Odds</label><input type="number" step="0.01" data-i="${i}" data-k="closing" value="${esc(x.closing)}" placeholder="Ex.: 1,50"></div>
+      <div class="c2"><label>Proba estim. (%)</label><input type="number" step="0.1" data-i="${i}" data-k="proba" value="${esc(x.proba)}" placeholder="Ex.: 72,8"></div>`:""}
+      <div class="c6"><button class="btn ghost sm" onclick="toggleDet(${i})">${x.det?"▲ Menos detalhes":"▼ Mais detalhes"}</button></div>
+    </div>
+   </div>`).join("");
+  box.querySelectorAll("input,select").forEach(el=>{
+    el.addEventListener("input", ()=>{ casaSels[+el.dataset.i][el.dataset.k] = el.value; atualizarOdd(); });
+  });
+  atualizarOdd();
+}
+function atualizarOdd(){
+  const oddT = oddTotalDe(casaSels);
+  $("cs-oddtotal").textContent = casaSels.length>1
+    ? `Múltipla · ${casaSels.length} seleções · Odd total ${oddFmt(oddT)}`
+    : (oddT? `Odd ${oddFmt(oddT)}` : "");
+  const v = +$("cs-valor").value||0;
+  $("cs-retpot").textContent = (oddT && v)? `Retorno potencial: ${fmt(v*oddT)} (lucro ${fmt(v*(oddT-1))})` : "";
+}
+$("cs-addsel").onclick = ()=>{ casaSels.push(novaSel()); renderSels(); };
+$("cs-valor").addEventListener("input", atualizarOdd);
+document.querySelectorAll(".fmt button").forEach(b=>{
+  b.onclick = ()=>{ document.querySelectorAll(".fmt button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); };
+});
+const fmtAtivo = ()=> document.querySelector(".fmt button.on")?.dataset.f || "simples";
+$("cs-estado").onchange = ()=>{ $("cs-ret-wrap").style.display = $("cs-estado").value==="cashout" ? "block":"none"; };
+$("cs-pct-ap").onclick = ()=>{
+  const p = +$("cs-pct").value||0;
+  if(!p){ toast("Informe o percentual.", true); return; }
+  $("cs-valor").value = (casaBancaAtual()*p/100).toFixed(2);
+  atualizarOdd();
+};
+function clearCasaForm(){
+  casaEditId=null; casaSels=[novaSel()];
+  $("cs-data").value = new Date().toISOString().slice(0,10);
+  $("cs-hora").value = new Date().toTimeString().slice(0,5);
+  ["cs-casa","cs-valor","cs-pct","cs-retorno","cs-obs"].forEach(id=>$(id).value="");
+  $("cs-estado").value="pendente"; $("cs-ret-wrap").style.display="none";
+  document.querySelectorAll(".fmt button").forEach(x=>x.classList.toggle("on", x.dataset.f==="simples"));
+  $("cs-title").textContent="Adicionar aposta";
+  $("cs-save").textContent="Adicionar aposta";
+  $("cs-cancel").style.display="none";
+  renderSels();
+}
+$("cs-cancel").onclick = clearCasaForm;
+$("cs-save").onclick = async ()=>{
+  const data=$("cs-data").value;
+  if(!data){ toast("Informe a data.", true); return; }
+  const selsOk = casaSels.filter(x=>x.titulo.trim());
+  if(!selsOk.length){ toast("Preencha pelo menos uma seleção.", true); return; }
+  const valor = +$("cs-valor").value||0;
+  if(!valor){ toast("Informe o valor da aposta.", true); return; }
+  const estado = $("cs-estado").value;
+  const bet = {
+    user_id:user.id, banca_id:bancaId,
+    data, hora:$("cs-hora").value||null,
+    casa:$("cs-casa").value.trim(),
+    formato: casaSels.length>1 ? "multipla" : fmtAtivo(),
+    valor, estado,
+    retorno: estado==="cashout" ? (+$("cs-retorno").value||0) : null,
+    obs:$("cs-obs").value.trim(),
+    selecoes: selsOk.map(({det,...x})=>x)
+  };
+  bet.pl = casaPL(bet);
+  /* oferece cadastrar casa nova */
+  if(bet.casa && !cad.casas.some(i=>i.nome.toLowerCase()===bet.casa.toLowerCase())){
+    if(confirm(`A casa "${bet.casa}" não está no cadastro. Deseja cadastrá-la?`)){
+      const { data:nc, error } = await sb.from("cad_casas").upsert({user_id:user.id, nome:bet.casa},{onConflict:"user_id,nome",ignoreDuplicates:true}).select();
+      if(!error && nc && nc[0]){ cad.casas.push(nc[0]); cad.casas.sort((a,b)=>a.nome.localeCompare(b.nome,"pt")); }
+    }
+  }
+  $("cs-save").disabled=true;
+  if(casaEditId){
+    const { data:upd, error } = await sb.from("casa_bets").update(bet).eq("id", casaEditId).eq("user_id", user.id).select().single();
+    $("cs-save").disabled=false;
+    if(error) return sbErr(error,"salvar a aposta");
+    db.casa = db.casa.map(b=> b.id===casaEditId? upd : b);
+    toast("Aposta atualizada.");
+  } else {
+    const { data:ins, error } = await sb.from("casa_bets").insert(bet).select().single();
+    $("cs-save").disabled=false;
+    if(error) return sbErr(error,"salvar a aposta");
+    db.casa.push(ins);
+    toast("Aposta adicionada.");
+  }
+  clearCasaForm(); fillDatalists(); fillMesAnoSelects(); renderCasa();
+};
+window.editCasa = id=>{
+  const b=db.casa.find(x=>x.id===id); if(!b) return;
+  casaEditId=id;
+  $("cs-data").value=b.data; $("cs-hora").value=b.hora||"";
+  $("cs-casa").value=b.casa||""; $("cs-valor").value=b.valor;
+  $("cs-estado").value=b.estado||"pendente";
+  $("cs-ret-wrap").style.display = b.estado==="cashout"?"block":"none";
+  $("cs-retorno").value=b.retorno??""; $("cs-obs").value=b.obs||"";
+  const f = b.formato==="multipla" ? "simples" : (b.formato||"simples");
+  document.querySelectorAll(".fmt button").forEach(x=>x.classList.toggle("on", x.dataset.f===f));
+  casaSels = (b.selecoes||[]).map(x=>({...novaSel(), ...x}));
+  if(!casaSels.length) casaSels=[novaSel()];
+  $("cs-title").textContent="Editando aposta";
+  $("cs-save").textContent="Salvar alterações";
+  $("cs-cancel").style.display="inline-block";
+  renderSels();
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+window.delCasa = async id=>{
+  if(!confirm("Excluir esta aposta?")) return;
+  const { error } = await sb.from("casa_bets").delete().eq("id", id).eq("user_id", user.id);
+  if(error) return sbErr(error,"excluir a aposta");
+  db.casa = db.casa.filter(b=>b.id!==id);
+  toast("Aposta excluída.");
+  renderCasa();
+};
+function filteredCasa(){
+  const mes=$("cs-mes").value, ano=$("cs-ano").value;
+  let list = [...db.casa].sort((a,b)=> a.data<b.data?-1 : a.data>b.data?1 : String(a.hora||"").localeCompare(String(b.hora||"")));
+  list = list.filter(b=> String(b.data).startsWith(ano));
+  if(mes!=="all") list = list.filter(b=> +String(b.data).slice(5,7)===+mes);
+  return list;
+}
+function renderCasaEntradas(){
+  if(!$("cs-tbody")) return;
+  const q = $("cs-busca").value.trim().toLowerCase();
+  let list = filteredCasa();
+  if(q) list = list.filter(b=> [b.casa,b.obs,...(b.selecoes||[]).flatMap(x=>[x.titulo,x.competicao,x.tipo,x.esporte])].join(" ").toLowerCase().includes(q));
+  const res = list.filter(b=>b.estado!=="pendente");
+  const g=list.filter(b=>b.estado==="green").length, r=list.filter(b=>b.estado==="red").length;
+  const pend=list.filter(b=>b.estado==="pendente").length;
+  const pl=res.reduce((sm,b)=>sm+(+b.pl||0),0);
+  const inv=list.reduce((sm,b)=>sm+(+b.valor||0),0);
+  const odds=list.map(b=>oddTotalDe(b.selecoes)).filter(v=>v>0);
+  const oddM=odds.length? odds.reduce((a,b)=>a+b,0)/odds.length : null;
+  $("cs-strip").innerHTML =
+    `<div><span>Apostas </span><b>${list.length}</b></div>
+     <div><span>Pendentes </span><b>${pend}</b></div>
+     <div><span>Greens </span><b class="pos">${g}</b></div>
+     <div><span>Reds </span><b class="neg">${r}</b></div>
+     <div><span>Investido </span><b>${fmt(inv)}</b></div>
+     <div><span>Odd média </span><b>${oddFmt(oddM)}</b></div>
+     <div><span>P/L </span><b class="${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</b></div>`;
+  $("cs-tbody").innerHTML = list.length? [...list].reverse().map(b=>{
+    const sels=b.selecoes||[];
+    const titulo = sels.length? esc(sels[0].titulo) + (sels.length>1?` <span class="chip live">+${sels.length-1}</span>`:"") : "—";
+    const detalhe = sels.length? `<div style="font-size:11.5px;color:var(--dim)">${sels.map(x=>[x.tipo,x.competicao].filter(Boolean).join(" · ")).filter(Boolean).join(" | ")||""}${b.obs?` — ${esc(b.obs)}`:""}</div>`:"";
+    const oddT=oddTotalDe(sels);
+    const fLabel = b.formato==="multipla"? "Múltipla" : b.formato==="lay"? "Lay" : b.formato==="back"? "Back" : "Simples";
+    return `<tr class="${b.estado==="green"?"g":(b.estado==="red"?"r":"")}">
+      <td class="mono">${dBR(b.data)}${b.hora?`<div style="font-size:10.5px;color:var(--dim)">${String(b.hora).slice(0,5)}</div>`:""}</td>
+      <td>${esc(b.casa)||"—"}</td>
+      <td>${titulo}${detalhe}</td>
+      <td><span class="chip ${b.formato==="lay"?"lay":"back"}">${fLabel}</span></td>
+      <td class="num">${oddFmt(oddT)}</td>
+      <td class="num">${fmt(+b.valor||0)}</td>
+      <td><span class="chip st-${b.estado}">${CASA_ESTADOS[b.estado]||b.estado}</span></td>
+      <td class="num ${cls(+b.pl)}">${b.estado==="pendente"?"—":(+b.pl>0?"+":"")+fmt(+b.pl||0)}</td>
+      <td><div class="rowactions">
+        <button class="iconbtn" onclick="editCasa('${b.id}')">Editar</button>
+        <button class="iconbtn" onclick="delCasa('${b.id}')">Excluir</button></div></td>
+    </tr>`;}).join("")
+  : `<tr><td colspan="9" class="empty">Nenhuma aposta neste período.</td></tr>`;
+}
+function renderCasaPainel(){
+  if(!$("cp-banca")) return;
+  const b = banca();
+  const saldo = casaBancaAtual();
+  const res = db.casa.filter(x=>x.estado!=="pendente");
+  const pl = res.reduce((sm,x)=>sm+(+x.pl||0),0);
+  const g=db.casa.filter(x=>x.estado==="green").length, r=db.casa.filter(x=>x.estado==="red").length;
+  const pend=db.casa.filter(x=>x.estado==="pendente");
+  $("cp-nome").textContent = `${b.nome} · Casa de Aposta`;
+  $("cp-banca").textContent = fmt(saldo);
+  $("cp-banca").className = "big "+cls(pl);
+  $("cp-sub").textContent = `Inicial ${fmt(+b.inicial||0)} · ${db.casa.length} aposta${db.casa.length===1?"":"s"} registradas`;
+  const e1=$("cp-pl"); e1.textContent=(pl>0?"+":"")+fmt(pl); e1.className="v "+cls(pl);
+  $("cp-gr").innerHTML = `<span class="pos">${g}</span> × <span class="neg">${r}</span>`;
+  const tot=g+r;
+  $("cp-tx").textContent = tot? `taxa de acerto ${pct(g/tot)}` : "taxa de acerto —";
+  $("cp-pend").textContent = pend.length;
+  $("cp-pendv").textContent = `${fmt(pend.reduce((sm,x)=>sm+(+x.valor||0),0))} em jogo`;
+  $("cp-stake").textContent = fmt(Math.max(saldo*((+b.gestao||0)/100),0));
+  $("cp-stake-s").textContent = `gestão de ${b.gestao}% da banca`;
+  const last=[...db.casa].sort((a,c)=>a.data<c.data?-1:1).slice(-6).reverse();
+  $("cp-last").innerHTML = last.length? last.map(x=>{
+    const sels=x.selecoes||[];
+    return `<tr class="${x.estado==="green"?"g":(x.estado==="red"?"r":"")}">
+      <td class="mono">${dBR(x.data)}</td>
+      <td>${esc(x.casa)||"—"}</td>
+      <td>${sels.length? esc(sels[0].titulo)+(sels.length>1?` <span class="chip live">+${sels.length-1}</span>`:""):"—"}</td>
+      <td class="num">${oddFmt(oddTotalDe(sels))}</td>
+      <td class="num">${fmt(+x.valor||0)}</td>
+      <td><span class="chip st-${x.estado}">${CASA_ESTADOS[x.estado]||x.estado}</span></td>
+      <td class="num ${cls(+x.pl)}">${x.estado==="pendente"?"—":(+x.pl>0?"+":"")+fmt(+x.pl||0)}</td></tr>`;}).join("")
+    : `<tr><td colspan="7" class="empty">Nenhuma aposta nesta banca ainda.</td></tr>`;
+}
+function renderCasa(){ renderCasaPainel(); renderCasaEntradas(); }
+["cs-mes","cs-ano"].forEach(id=> $(id).onchange = renderCasaEntradas);
+$("cs-busca").oninput = renderCasaEntradas;
+
 /* ============ Boot ============ */
-function renderAll(){ renderPainel(); renderDashboard(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); }
+function renderAll(){ renderPainel(); renderDashboard(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); renderBancaTab(); renderCasa(); }
 $("s-versao").textContent = APP_VERSAO;
 document.querySelector(".login-card p.sub").insertAdjacentHTML("beforeend", ` <span class="mono" style="color:var(--dim);font-size:11px">· ${APP_VERSAO}</span>`);
 clearForm();
+clearCasaForm();
 $("m-data").value = new Date().toISOString().slice(0,10);
 boot();
 </script>
