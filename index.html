@@ -30,7 +30,7 @@ label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase
 /* ---------- Login ---------- */
 #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:34px;width:100%;max-width:380px}
-.login-card .brandline{display:flex;align-items:baseline;gap:9px;margin-bottom:4px}
+.login-card .brandline{display:flex;align-items:baseline;gap:9px;margin-bottom:4px;flex-wrap:wrap}
 .login-card .brandline b{font-weight:800;font-size:22px}
 .login-card .brandline span{color:var(--mut);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
 .login-card p.sub{color:var(--mut);font-size:13.5px;margin-bottom:22px}
@@ -42,13 +42,16 @@ label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase
 .btn.full{width:100%}
 .btn.ghost{background:none;border:1px solid var(--line);color:var(--txt);font-weight:600}
 .btn.danger{background:none;border:1px solid var(--red);color:var(--red);font-weight:600}
+.btn.sm{padding:5px 10px;font-size:12px}
 
-header{border-bottom:1px solid var(--line);padding:0 22px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;background:linear-gradient(180deg,#121a23,#0E141B)}
+header{border-bottom:1px solid var(--line);padding:0 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(180deg,#121a23,#0E141B)}
 .brand{padding:16px 0 14px;display:flex;align-items:baseline;gap:10px}
 .brand b{font-weight:800;font-size:19px;letter-spacing:.02em}
 .brand span{color:var(--mut);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.banca-pick{display:flex;align-items:center;gap:8px}
+.banca-pick select{width:auto;min-width:170px;background:var(--panel2);border-color:var(--line);font-weight:600;padding:8px 12px}
 nav{display:flex;gap:4px;margin-left:auto}
-nav button{background:none;border:none;color:var(--mut);font-weight:600;font-size:14px;padding:20px 14px;border-bottom:2px solid transparent}
+nav button{background:none;border:none;color:var(--mut);font-weight:600;font-size:14px;padding:20px 12px;border-bottom:2px solid transparent}
 nav button.on{color:var(--txt);border-bottom-color:var(--gold)}
 nav button:hover{color:var(--txt)}
 .session{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--dim)}
@@ -96,7 +99,6 @@ tbody tr:hover{background:#19222d}
 .formgrid .c2{grid-column:span 2}
 .formgrid .c3{grid-column:span 3}
 .formgrid .c6{grid-column:span 6}
-.btn.sm{padding:5px 10px;font-size:12px}
 .rowactions{display:flex;gap:6px;justify-content:flex-end}
 .iconbtn{background:none;border:1px solid var(--line);color:var(--mut);border-radius:5px;padding:3px 8px;font-size:12px}
 .iconbtn:hover{color:var(--txt);border-color:var(--mut)}
@@ -124,18 +126,38 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 .movs td{font-size:13px}
 .io{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 
+/* ---------- Cadastros ---------- */
+.cadgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cad-add{display:flex;gap:8px;margin-bottom:12px}
+.cad-list{max-height:340px;overflow-y:auto}
+.cad-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #1c2634;font-size:13.5px}
+.cad-item:hover{background:#19222d}
+.cad-item .x{background:none;border:none;color:var(--dim);font-size:14px;padding:2px 7px;border-radius:4px}
+.cad-item .x:hover{color:var(--red);background:var(--red-soft)}
+.cad-count{font-size:11px;color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none;margin-left:6px}
+
+/* ---------- Modal nova banca ---------- */
+dialog{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:26px;max-width:400px;width:92%}
+dialog::backdrop{background:rgba(4,8,12,.72)}
+dialog h3{margin-bottom:4px;font-size:17px;font-weight:800}
+dialog p.sub{color:var(--mut);font-size:13px;margin-bottom:18px}
+dialog .field{margin-bottom:13px}
+dialog .dactions{display:flex;gap:10px;margin-top:18px}
+
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:10px 18px;border-radius:8px;font-size:13.5px;display:none;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 #toast.err{border-color:var(--red);color:var(--red)}
 
-@media(max-width:860px){
+@media(max-width:900px){
   .hero{grid-template-columns:1fr}
-  .grid2{grid-template-columns:1fr}
+  .grid2,.cadgrid{grid-template-columns:1fr}
   .formgrid{grid-template-columns:repeat(2,1fr)}
   .formgrid .c3,.formgrid .c6{grid-column:span 2}
   .cfg{grid-template-columns:1fr}
   .hero-banca .big{font-size:34px}
-  nav{width:100%;overflow-x:auto}
-  nav button{padding:14px 12px}
+  nav{width:100%;overflow-x:auto;margin-left:0}
+  nav button{padding:14px 10px;white-space:nowrap}
+  .banca-pick{width:100%;padding-bottom:10px}
+  .banca-pick select{flex:1}
 }
 </style>
 </head>
@@ -145,7 +167,7 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 <div id="login">
   <div class="login-card">
     <div class="brandline"><b>Gestão de Banca</b><span>Rafael Andrade</span></div>
-    <p class="sub">Entre com seu e-mail e senha para acessar sua banca.</p>
+    <p class="sub">Entre com seu e-mail e senha para acessar suas bancas.</p>
     <div class="login-err" id="l-err"></div>
     <div class="field"><label>E-mail</label><input type="email" id="l-email" autocomplete="username" placeholder="voce@email.com"></div>
     <div class="field"><label>Senha</label><input type="password" id="l-senha" autocomplete="current-password" placeholder="••••••••"></div>
@@ -153,16 +175,20 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
   </div>
 </div>
 
-<div id="loading">Carregando sua banca…</div>
+<div id="loading">Carregando suas bancas…</div>
 
 <!-- ============ APP ============ -->
 <div id="app">
 <header>
   <div class="brand"><b>Gestão de Banca</b><span>Rafael Andrade</span></div>
+  <div class="banca-pick">
+    <select id="b-sel" title="Banca ativa"></select>
+  </div>
   <nav>
     <button data-tab="painel" class="on">Painel</button>
     <button data-tab="entradas">Entradas</button>
     <button data-tab="analises">Análises</button>
+    <button data-tab="cadastros">Cadastros</button>
     <button data-tab="config">Configuração</button>
   </nav>
   <div class="session"><span id="s-email"></span><button id="s-sair">Sair</button></div>
@@ -173,13 +199,13 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 <section id="tab-painel" class="tab on">
   <div class="hero">
     <div class="hero-banca">
-      <div class="eyebrow">Banca atual</div>
+      <div class="eyebrow" id="p-nome">Banca atual</div>
       <div class="big" id="p-banca">R$ 0,00</div>
       <div class="sub" id="p-banca-sub">—</div>
       <svg id="spark" viewBox="0 0 600 64" preserveAspectRatio="none"></svg>
     </div>
     <div class="cards">
-      <div class="card"><div class="k">Lucro / Prejuízo</div><div class="v" id="p-pl">R$ 0,00</div><div class="s">todas as entradas</div></div>
+      <div class="card"><div class="k">Lucro / Prejuízo</div><div class="v" id="p-pl">R$ 0,00</div><div class="s">todas as entradas desta banca</div></div>
       <div class="card"><div class="k">ROI sobre a banca</div><div class="v" id="p-roi">0%</div><div class="s">lucro ÷ banca inicial</div></div>
       <div class="card"><div class="k">Greens × Reds</div><div class="v" id="p-gr">0 × 0</div><div class="s" id="p-tx">taxa de acerto —</div></div>
       <div class="card"><div class="k">Stake sugerida</div><div class="v" id="p-stake">R$ 0,00</div><div class="s" id="p-stake-s">gestão de 0% da banca</div></div>
@@ -228,9 +254,10 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
         </div>
       </div>
       <div class="c6"><label>Observação</label><input id="f-obs" placeholder="Ex.: cash aos 70 minutos, sufoco, fora do padrão…"></div>
-      <div class="c6" style="display:flex;gap:10px">
+      <div class="c6" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn" id="f-save">Salvar entrada</button>
         <button class="btn ghost" id="f-cancel" style="display:none">Cancelar edição</button>
+        <span style="font-size:12.5px;color:var(--dim)">Salvando na banca: <b id="f-banca" style="color:var(--gold)"></b></span>
       </div>
     </div>
   </div>
@@ -282,19 +309,51 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
   </div>
 </section>
 
+<!-- ============ CADASTROS ============ -->
+<section id="tab-cadastros" class="tab">
+  <p class="hint" style="margin-bottom:14px">Os cadastros alimentam as sugestões do formulário de entrada e valem para todas as bancas. Excluir um item daqui não altera entradas já registradas.</p>
+  <div class="cadgrid">
+    <div class="panel">
+      <h2>Equipes <span class="cad-count" id="n-equipes"></span></h2>
+      <div class="cad-add"><input id="add-equipes" placeholder="Nome da equipe"><button class="btn sm" onclick="cadAdd('equipes')">Adicionar</button></div>
+      <div class="cad-list" id="list-equipes"></div>
+    </div>
+    <div class="panel">
+      <h2>Campeonatos <span class="cad-count" id="n-campeonatos"></span></h2>
+      <div class="cad-add"><input id="add-campeonatos" placeholder="Nome do campeonato"><button class="btn sm" onclick="cadAdd('campeonatos')">Adicionar</button></div>
+      <div class="cad-list" id="list-campeonatos"></div>
+    </div>
+    <div class="panel">
+      <h2>Mercados <span class="cad-count" id="n-mercados"></span></h2>
+      <div class="cad-add"><input id="add-mercados" placeholder="Nome do mercado"><button class="btn sm" onclick="cadAdd('mercados')">Adicionar</button></div>
+      <div class="cad-list" id="list-mercados"></div>
+    </div>
+    <div class="panel">
+      <h2>Estratégias <span class="cad-count" id="n-estrategias"></span></h2>
+      <div class="cad-add"><input id="add-estrategias" placeholder="Nome da estratégia"><button class="btn sm" onclick="cadAdd('estrategias')">Adicionar</button></div>
+      <div class="cad-list" id="list-estrategias"></div>
+    </div>
+  </div>
+</section>
+
 <section id="tab-config" class="tab">
   <div class="panel">
-    <h2>Parâmetros da banca</h2>
-    <div class="cfg">
+    <h2>Banca ativa</h2>
+    <div class="cfg" style="grid-template-columns:repeat(4,1fr);max-width:860px">
+      <div><label>Nome da banca</label><input id="c-nome"></div>
       <div><label>Banca inicial (R$)</label><input type="number" step="0.01" id="c-inicial"></div>
       <div><label>Gestão · % da banca por stake</label><input type="number" step="0.1" id="c-gestao"></div>
-      <div style="align-self:end"><button class="btn" id="c-save">Salvar parâmetros</button></div>
+      <div style="align-self:end"><button class="btn" id="c-save">Salvar</button></div>
     </div>
     <p class="hint">A stake sugerida no Painel é calculada como <b>% de gestão × banca atual</b>. Ex.: gestão 2% com banca de R$ 500 → stake de R$ 10.</p>
+    <div class="io">
+      <button class="btn ghost" id="b-nova">➕ Criar nova banca</button>
+      <button class="btn danger" id="b-excluir">Excluir esta banca</button>
+    </div>
   </div>
 
   <div class="panel">
-    <h2>Levantamentos e aportes</h2>
+    <h2>Levantamentos e aportes · <span id="m-banca" style="color:var(--gold)"></span></h2>
     <div class="cfg" style="max-width:760px">
       <div><label>Data</label><input type="date" id="m-data"></div>
       <div><label>Tipo</label><select id="m-tipo"><option value="levantamento">Levantamento (saque)</option><option value="aporte">Aporte (depósito)</option></select></div>
@@ -308,19 +367,32 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
   </div>
 
   <div class="panel">
-    <h2>Backup dos dados</h2>
-    <p class="hint">Os dados ficam salvos no <b>Supabase</b>, na sua conta. Ainda assim, é uma boa prática exportar um backup em JSON de vez em quando. A importação também aceita o backup da versão antiga (localStorage), migrando tudo para o Supabase.</p>
+    <h2>Backup da banca ativa</h2>
+    <p class="hint">Exporta e importa os dados <b>da banca selecionada no topo</b>. A importação aceita também o backup da versão antiga (localStorage).</p>
     <div class="io">
       <button class="btn ghost" id="io-export">Exportar backup (JSON)</button>
       <button class="btn ghost" id="io-import">Importar backup</button>
       <input type="file" id="io-file" accept=".json" style="display:none">
-      <button class="btn danger" id="io-wipe">Apagar todos os dados</button>
+      <button class="btn danger" id="io-wipe">Apagar dados desta banca</button>
     </div>
   </div>
 </section>
 
 </main>
 </div>
+
+<!-- ============ MODAL NOVA BANCA ============ -->
+<dialog id="dlg-banca">
+  <h3>Nova banca</h3>
+  <p class="sub">Crie uma banca separada, com suas próprias entradas e gestão.</p>
+  <div class="field"><label>Nome da banca</label><input id="nb-nome" placeholder="Ex.: Banca Talita"></div>
+  <div class="field"><label>Banca inicial (R$)</label><input type="number" step="0.01" id="nb-inicial" value="300"></div>
+  <div class="field"><label>Gestão · % da banca por stake</label><input type="number" step="0.1" id="nb-gestao" value="2"></div>
+  <div class="dactions">
+    <button class="btn" id="nb-criar">Criar banca</button>
+    <button class="btn ghost" id="nb-cancelar">Cancelar</button>
+  </div>
+</dialog>
 
 <div id="toast"></div>
 
@@ -330,28 +402,31 @@ tr.r td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 <datalist id="dl-merc"></datalist>
 
 <script>
-/* =====================================================================
-   CONFIGURAÇÃO DO SUPABASE — cole aqui os dados do seu projeto
-   (Supabase → Project Settings → API)
-   ===================================================================== */
+/* ============ CONFIGURAÇÃO DO SUPABASE ============ */
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ================= Dados-base (da planilha) ================= */
-const FORMAS = ["Back - Super Favorito","Lay - Super Favorito","Back - Favorito","Lay - Favorito","Back - Não Favorito","Lay - Não Favorito","Back - Jogo Parelho","Lay - Jogo Parelho","Over Limite","Over a Frente","Under Limite","Under a Frente","Back Correct Score","Lay Correct Score","Lay 1x0","Lay 0x1","Lay Zebra","Lay - Goleada","Lay Goleada Mandante","Lay Goleada Visitante","Vovô"];
-const MERCADOS = ["Match Odds","Intervalo","Over e Under 0.5 HT","Over e Under 1.5 HT","Over e Under 2.5 HT","Over e Under 0.5","Over e Under 1.5","Over e Under 2.5","Over e Under 3.5","Over e Under 4.5","Over e Under 5.5","Resultado do Jogo","Resultado ao Intervalo","Handicap","Ambas Marcam","Empate Anula a Aposta","Chance Dupla","Placar Correto"];
-const COMPS = ["Brasileiro - Série A","Brasileiro - Série B","Copa do Brasil","Estaduais","Premier League","Championship","La Liga","La Liga 2","Serie A (Itália)","Bundesliga 1","Bundesliga 2","Ligue 1","Primeira Liga","Eredivisie","Champions League","Europa League","Copa Libertadores","Copa Sulamericana","MLS","Campeonato Argentino","Super Lig","Allsvenskan","Copa do Rei","Copa da Inglaterra","Copa da Liga","DFB Pokal","Amistosos","NBA"];
-const TIMES = ["Flamengo","Palmeiras","Corinthians","São Paulo","Santos","Botafogo","Vasco","Grêmio","Internacional","Atlético MG","Cruzeiro","Bahia","Fortaleza","Ceará","Sport","Mirassol","Liverpool","Man City","Man Utd","Arsenal","Chelsea","Tottenham","Newcastle","West Ham","Everton","Fulham","Brentford","Brighton","Wolverhampton","Nottingham","Bournemouth","Real Madrid","Barcelona","Atl Madrid","Sevilla","Betis","Real Sociedad","Bilbao","Alavés","Oviedo","AC Milan","Inter Milan","Juventus","Napoli","Roma","Lazio","Atalanta","Fiorentina","Genoa","Sassuolo","Bayern Munich","Dortmund","RB Leipzig","Bayer 04","Koln","Frankfurt","Paris St-G","Monaco","Lyon","Marseille","Nice","Porto","Benfica","Sporting","Braga","Ajax","PSV","Feyenoord","Celtic","Rangers","Galatasaray","Fenerbahce","Besiktas"];
+/* ============ Listas-padrão (semente inicial dos cadastros) ============ */
+const SEED = {
+  estrategias: ["Back - Super Favorito","Lay - Super Favorito","Back - Favorito","Lay - Favorito","Back - Não Favorito","Lay - Não Favorito","Back - Jogo Parelho","Lay - Jogo Parelho","Over Limite","Over a Frente","Under Limite","Under a Frente","Back Correct Score","Lay Correct Score","Lay 1x0","Lay 0x1","Lay Zebra","Lay - Goleada","Lay Goleada Mandante","Lay Goleada Visitante","Vovô"],
+  mercados: ["Match Odds","Intervalo","Over e Under 0.5 HT","Over e Under 1.5 HT","Over e Under 2.5 HT","Over e Under 0.5","Over e Under 1.5","Over e Under 2.5","Over e Under 3.5","Over e Under 4.5","Over e Under 5.5","Resultado do Jogo","Resultado ao Intervalo","Handicap","Ambas Marcam","Empate Anula a Aposta","Chance Dupla","Placar Correto"],
+  campeonatos: ["Brasileiro - Série A","Brasileiro - Série B","Copa do Brasil","Estaduais","Premier League","Championship","La Liga","La Liga 2","Serie A (Itália)","Bundesliga 1","Bundesliga 2","Ligue 1","Primeira Liga","Eredivisie","Champions League","Europa League","Copa Libertadores","Copa Sulamericana","MLS","Campeonato Argentino","Super Lig","Allsvenskan","Copa do Rei","Copa da Inglaterra","Copa da Liga","DFB Pokal","Amistosos","NBA"],
+  equipes: ["Flamengo","Palmeiras","Corinthians","São Paulo","Santos","Botafogo","Vasco","Grêmio","Internacional","Atlético MG","Cruzeiro","Bahia","Fortaleza","Ceará","Sport","Mirassol","Liverpool","Man City","Man Utd","Arsenal","Chelsea","Tottenham","Newcastle","West Ham","Everton","Fulham","Brentford","Brighton","Wolverhampton","Nottingham","Bournemouth","Real Madrid","Barcelona","Atl Madrid","Sevilla","Betis","Real Sociedad","Bilbao","Alavés","Oviedo","AC Milan","Inter Milan","Juventus","Napoli","Roma","Lazio","Atalanta","Fiorentina","Genoa","Sassuolo","Bayern Munich","Dortmund","RB Leipzig","Bayer 04","Koln","Frankfurt","Paris St-G","Monaco","Lyon","Marseille","Nice","Porto","Benfica","Sporting","Braga","Ajax","PSV","Feyenoord","Celtic","Rangers","Galatasaray","Fenerbahce","Besiktas"]
+};
+const CAD_TABLES = { equipes:"cad_equipes", campeonatos:"cad_campeonatos", mercados:"cad_mercados", estrategias:"cad_estrategias" };
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-/* ================= Estado ================= */
+/* ============ Estado ============ */
 let user = null;
-let db = {config:{inicial:300, gestao:2}, bets:[], movs:[]};
+let bancas = [];
+let bancaId = null;
+let db = { bets:[], movs:[] };
+let cad = { equipes:[], campeonatos:[], mercados:[], estrategias:[] };
 
-/* ================= Utilidades ================= */
+/* ============ Utilidades ============ */
 const $ = id => document.getElementById(id);
+const banca = () => bancas.find(b=>b.id===bancaId) || {nome:"—", inicial:0, gestao:0};
 const fmt = v => (v<0?"-":"") + "R$ " + Math.abs(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct = v => (v*100).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "%";
 const cls = v => v>0.004?"pos":(v<-0.004?"neg":"neu");
@@ -364,9 +439,9 @@ function movsUntil(pred){ return db.movs.filter(pred).reduce((s,m)=> s + (m.tipo
 function bancaAntesDe(iso){
   const pl = plOf(db.bets.filter(b=>b.data < iso));
   const mv = movsUntil(m=>m.data < iso);
-  return (+db.config.inicial||0) + pl + mv;
+  return (+banca().inicial||0) + pl + mv;
 }
-function bancaAtual(){ return (+db.config.inicial||0) + plOf(db.bets) + movsUntil(()=>true); }
+function bancaAtual(){ return (+banca().inicial||0) + plOf(db.bets) + movsUntil(()=>true); }
 function anosDisponiveis(){
   const s = new Set([new Date().getFullYear()]);
   db.bets.forEach(b=> s.add(+String(b.data).slice(0,4)));
@@ -383,7 +458,7 @@ function sbErr(error, acao){
   toast(`Falha ao ${acao}: ${error.message||"erro de conexão"}`, true);
 }
 
-/* ================= Autenticação ================= */
+/* ============ Autenticação ============ */
 async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
   if(session){ await entrar(session.user); }
@@ -394,10 +469,17 @@ async function entrar(u){
   $("login").style.display="none";
   $("loading").style.display="block";
   $("s-email").textContent = u.email;
-  await loadAll();
-  $("loading").style.display="none";
-  $("app").style.display="block";
-  fillDatalists(); fillMesAnoSelects(); renderAll();
+  await loadBancas();
+  await loadCadastros();
+  if(!bancas.length){
+    $("loading").style.display="none";
+    $("app").style.display="block";
+    abrirModalBanca(true);
+  } else {
+    const salvo = localStorage.getItem("banca_ativa_"+u.id);
+    bancaId = bancas.some(b=>b.id===salvo)? salvo : bancas[0].id;
+    await selecionarBanca(bancaId, true);
+  }
 }
 $("l-entrar").onclick = async ()=>{
   const email=$("l-email").value.trim(), senha=$("l-senha").value;
@@ -413,35 +495,137 @@ $("l-entrar").onclick = async ()=>{
   await entrar(data.user);
 };
 $("l-senha").addEventListener("keydown", e=>{ if(e.key==="Enter") $("l-entrar").click(); });
-$("s-sair").onclick = async ()=>{
-  await sb.auth.signOut();
-  location.reload();
-};
+$("s-sair").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
 
-/* ================= Carga de dados ================= */
-async function loadAll(){
-  /* cada consulta com try/catch independente para não travar a tela */
+/* ============ Bancas ============ */
+async function loadBancas(){
   try{
-    const { data, error } = await sb.from("banca_config").select("*").eq("user_id", user.id).maybeSingle();
+    const { data, error } = await sb.from("bancas").select("*").eq("user_id", user.id).order("criado_em");
     if(error) throw error;
-    if(data) db.config = { inicial:+data.inicial, gestao:+data.gestao };
-    else {
-      await sb.from("banca_config").insert({ user_id:user.id, inicial:db.config.inicial, gestao:db.config.gestao });
-    }
-  }catch(e){ sbErr(e,"carregar configuração"); }
+    bancas = data||[];
+  }catch(e){ sbErr(e,"carregar as bancas"); bancas=[]; }
+  renderBancaSel();
+}
+function renderBancaSel(){
+  const sel = $("b-sel");
+  sel.innerHTML = bancas.map(b=>`<option value="${b.id}">${esc(b.nome)}</option>`).join("")
+    + `<option value="__nova">➕ Criar nova banca…</option>`;
+  if(bancaId) sel.value = bancaId;
+}
+$("b-sel").onchange = async e=>{
+  if(e.target.value==="__nova"){ e.target.value = bancaId||""; abrirModalBanca(false); return; }
+  await selecionarBanca(e.target.value, false);
+};
+async function selecionarBanca(id, primeiro){
+  bancaId = id;
+  localStorage.setItem("banca_ativa_"+user.id, id);
+  renderBancaSel();
+  $("loading").style.display="block";
+  if(!primeiro) $("app").style.display="none";
+  await loadBancaData();
+  $("loading").style.display="none";
+  $("app").style.display="block";
+  fillDatalists(); fillMesAnoSelects(); renderAll();
+}
+async function loadBancaData(){
   try{
-    const { data, error } = await sb.from("banca_bets").select("*").eq("user_id", user.id).limit(10000);
+    const { data, error } = await sb.from("banca_bets").select("*").eq("user_id", user.id).eq("banca_id", bancaId).limit(10000);
     if(error) throw error;
     db.bets = data||[];
-  }catch(e){ sbErr(e,"carregar entradas"); }
+  }catch(e){ sbErr(e,"carregar entradas"); db.bets=[]; }
   try{
-    const { data, error } = await sb.from("banca_movs").select("*").eq("user_id", user.id).limit(5000);
+    const { data, error } = await sb.from("banca_movs").select("*").eq("user_id", user.id).eq("banca_id", bancaId).limit(5000);
     if(error) throw error;
     db.movs = data||[];
-  }catch(e){ sbErr(e,"carregar movimentações"); }
+  }catch(e){ sbErr(e,"carregar movimentações"); db.movs=[]; }
 }
+function abrirModalBanca(obrigatorio){
+  $("nb-nome").value=""; $("nb-inicial").value="300"; $("nb-gestao").value="2";
+  $("nb-cancelar").style.display = obrigatorio? "none":"inline-block";
+  $("dlg-banca").showModal();
+  $("nb-nome").focus();
+}
+$("nb-cancelar").onclick = ()=> $("dlg-banca").close();
+$("nb-criar").onclick = async ()=>{
+  const nome = $("nb-nome").value.trim();
+  if(!nome){ toast("Dê um nome à banca.", true); return; }
+  $("nb-criar").disabled=true;
+  const row = { user_id:user.id, nome, inicial:+$("nb-inicial").value||0, gestao:+$("nb-gestao").value||0 };
+  const { data, error } = await sb.from("bancas").insert(row).select().single();
+  $("nb-criar").disabled=false;
+  if(error) return sbErr(error,"criar a banca");
+  bancas.push(data);
+  $("dlg-banca").close();
+  toast(`Banca "${nome}" criada.`);
+  await selecionarBanca(data.id, false);
+};
+$("b-nova").onclick = ()=> abrirModalBanca(false);
+$("b-excluir").onclick = async ()=>{
+  if(bancas.length<=1){ toast("Você precisa ter pelo menos uma banca.", true); return; }
+  const b = banca();
+  if(!confirm(`Excluir a banca "${b.nome}"? TODAS as entradas e movimentações dela serão apagadas.`)) return;
+  if(!confirm("Tem certeza? Esta ação não pode ser desfeita.")) return;
+  const { error } = await sb.from("bancas").delete().eq("id", bancaId).eq("user_id", user.id);
+  if(error) return sbErr(error,"excluir a banca");
+  bancas = bancas.filter(x=>x.id!==bancaId);
+  toast("Banca excluída.");
+  await selecionarBanca(bancas[0].id, false);
+};
 
-/* ================= Navegação ================= */
+/* ============ Cadastros ============ */
+async function loadCadastros(){
+  for(const key of Object.keys(CAD_TABLES)){
+    const tb = CAD_TABLES[key];
+    try{
+      let { data, error } = await sb.from(tb).select("*").eq("user_id", user.id).order("nome").limit(5000);
+      if(error) throw error;
+      if(!data || !data.length){
+        /* primeira vez: semeia com as listas da planilha */
+        const rows = SEED[key].map(nome=>({ user_id:user.id, nome }));
+        const ins = await sb.from(tb).upsert(rows, { onConflict:"user_id,nome", ignoreDuplicates:true }).select();
+        data = ins.data || [];
+      }
+      cad[key] = (data||[]).sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+    }catch(e){ sbErr(e,"carregar cadastro de "+key); cad[key]=[]; }
+  }
+  renderCadastros();
+}
+function renderCadastros(){
+  for(const key of Object.keys(CAD_TABLES)){
+    $("n-"+key).textContent = `· ${cad[key].length}`;
+    $("list-"+key).innerHTML = cad[key].length? cad[key].map(item=>
+      `<div class="cad-item"><span>${esc(item.nome)}</span>
+        <button class="x" title="Excluir" onclick="cadDel('${key}','${item.id}')">✕</button></div>`).join("")
+      : `<div class="empty">Nenhum item cadastrado.</div>`;
+  }
+}
+window.cadAdd = async key=>{
+  const inp = $("add-"+key);
+  const nome = inp.value.trim();
+  if(!nome){ toast("Digite o nome.", true); return; }
+  if(cad[key].some(i=>i.nome.toLowerCase()===nome.toLowerCase())){ toast("Este item já está cadastrado.", true); return; }
+  const { data, error } = await sb.from(CAD_TABLES[key]).insert({ user_id:user.id, nome }).select().single();
+  if(error) return sbErr(error,"cadastrar");
+  cad[key].push(data);
+  cad[key].sort((a,b)=>a.nome.localeCompare(b.nome,"pt"));
+  inp.value="";
+  toast("Cadastrado.");
+  renderCadastros(); fillDatalists();
+};
+window.cadDel = async (key,id)=>{
+  const item = cad[key].find(i=>i.id===id);
+  if(!confirm(`Excluir "${item?.nome}" do cadastro?`)) return;
+  const { error } = await sb.from(CAD_TABLES[key]).delete().eq("id", id).eq("user_id", user.id);
+  if(error) return sbErr(error,"excluir do cadastro");
+  cad[key] = cad[key].filter(i=>i.id!==id);
+  toast("Excluído do cadastro.");
+  renderCadastros(); fillDatalists();
+};
+["equipes","campeonatos","mercados","estrategias"].forEach(key=>{
+  $("add-"+key).addEventListener("keydown", e=>{ if(e.key==="Enter") cadAdd(key); });
+});
+
+/* ============ Navegação ============ */
 document.querySelectorAll("nav button").forEach(btn=>{
   btn.onclick = ()=>{
     document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));
@@ -452,23 +636,25 @@ document.querySelectorAll("nav button").forEach(btn=>{
   };
 });
 
-/* ================= Painel ================= */
+/* ============ Painel ============ */
 function renderPainel(){
   const ano = new Date().getFullYear();
   $("p-ano").textContent = ano;
-  const banca = bancaAtual();
+  const b = banca();
+  const saldo = bancaAtual();
   const bets = sortedBets();
   const pl = plOf(bets);
-  const greens = bets.filter(b=>+b.pl>0).length, reds = bets.filter(b=>+b.pl<0).length;
+  const greens = bets.filter(x=>+x.pl>0).length, reds = bets.filter(x=>+x.pl<0).length;
 
-  $("p-banca").textContent = fmt(banca);
+  $("p-nome").textContent = b.nome;
+  $("p-banca").textContent = fmt(saldo);
   $("p-banca").className = "big "+cls(pl);
-  $("p-banca-sub").textContent = `Inicial ${fmt(+db.config.inicial||0)} · ${bets.length} entrada${bets.length===1?"":"s"} registradas`;
+  $("p-banca-sub").textContent = `Inicial ${fmt(+b.inicial||0)} · ${bets.length} entrada${bets.length===1?"":"s"} registradas`;
 
   const elPl = $("p-pl");
   elPl.textContent = (pl>0?"+":"")+fmt(pl); elPl.className = "v "+cls(pl);
 
-  const roi = db.config.inicial>0 ? pl/db.config.inicial : 0;
+  const roi = b.inicial>0 ? pl/b.inicial : 0;
   const elRoi = $("p-roi");
   elRoi.textContent = (roi>0?"+":"")+pct(roi); elRoi.className = "v "+cls(roi);
 
@@ -476,19 +662,19 @@ function renderPainel(){
   const tot = greens+reds;
   $("p-tx").textContent = tot? `taxa de acerto ${pct(greens/tot)}` : "taxa de acerto —";
 
-  const stake = banca * ((+db.config.gestao||0)/100);
+  const stake = saldo * ((+b.gestao||0)/100);
   $("p-stake").textContent = fmt(Math.max(stake,0));
-  $("p-stake-s").textContent = `gestão de ${db.config.gestao}% da banca`;
+  $("p-stake-s").textContent = `gestão de ${b.gestao}% da banca`;
 
-  let acc = +db.config.inicial||0, pts=[acc];
-  const evts = [...bets.map(b=>({data:b.data, v:+b.pl||0})),
+  let acc = +b.inicial||0, pts=[acc];
+  const evts = [...bets.map(x=>({data:x.data, v:+x.pl||0})),
                 ...db.movs.map(m=>({data:m.data, v:(m.tipo==="aporte"?+m.valor:-m.valor)}))]
-               .sort((a,b)=>a.data<b.data?-1:1);
+               .sort((a,c)=>a.data<c.data?-1:1);
   evts.forEach(e=>{acc+=e.v; pts.push(acc);});
   drawSpark(pts);
 
   const bw = $("p-bars"); bw.innerHTML="";
-  const vals = MESES.map((_,i)=> plOf(bets.filter(b=> String(b.data).startsWith(`${ano}-${String(i+1).padStart(2,"0")}`))));
+  const vals = MESES.map((_,i)=> plOf(bets.filter(x=> String(x.data).startsWith(`${ano}-${String(i+1).padStart(2,"0")}`))));
   const mx = Math.max(...vals.map(Math.abs), 1);
   vals.forEach((v,i)=>{
     const h = Math.round(Math.abs(v)/mx*92)+2;
@@ -500,20 +686,20 @@ function renderPainel(){
 
   const lb = $("p-last");
   const last = bets.slice(-6).reverse();
-  lb.innerHTML = last.length? last.map(b=>
-    `<tr class="${+b.pl>0?"g":(+b.pl<0?"r":"")}">
-      <td class="mono">${dBR(b.data)}</td>
-      <td>${esc(b.mand)} × ${esc(b.vis)}</td>
-      <td>${esc(b.mercado)}</td>
-      <td class="num ${cls(+b.pl)}">${(+b.pl>0?"+":"")+fmt(+b.pl)}</td></tr>`).join("")
-    : `<tr><td colspan="4" class="empty">Nenhuma entrada ainda — registre a primeira na aba Entradas.</td></tr>`;
+  lb.innerHTML = last.length? last.map(x=>
+    `<tr class="${+x.pl>0?"g":(+x.pl<0?"r":"")}">
+      <td class="mono">${dBR(x.data)}</td>
+      <td>${esc(x.mand)} × ${esc(x.vis)}</td>
+      <td>${esc(x.mercado)}</td>
+      <td class="num ${cls(+x.pl)}">${(+x.pl>0?"+":"")+fmt(+x.pl)}</td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">Nenhuma entrada nesta banca ainda.</td></tr>`;
 
   const mb = $("p-meses"); mb.innerHTML="";
   MESES.forEach((nome,i)=>{
     const m = String(i+1).padStart(2,"0");
     const ini = `${ano}-${m}-01`;
     const fimIso = i===11? `${ano+1}-01-01` : `${ano}-${String(i+2).padStart(2,"0")}-01`;
-    const betsM = bets.filter(b=> b.data>=ini && b.data<fimIso);
+    const betsM = bets.filter(x=> x.data>=ini && x.data<fimIso);
     const lev = db.movs.filter(x=>x.tipo==="levantamento" && x.data>=ini && x.data<fimIso).reduce((s,x)=>s+ +x.valor,0);
     const apo = db.movs.filter(x=>x.tipo==="aporte" && x.data>=ini && x.data<fimIso).reduce((s,x)=>s+ +x.valor,0);
     if(!betsM.length && !lev && !apo){
@@ -551,17 +737,17 @@ function drawSpark(pts){
     <path d="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
 }
 
-/* ================= Entradas ================= */
+/* ============ Entradas ============ */
 let editId = null;
 function fillDatalists(){
-  const set = (id, base, extra)=> {
-    const s=new Set(base); extra.forEach(v=>v&&s.add(v));
+  const set = (id, key, extra)=> {
+    const s=new Set(cad[key].map(i=>i.nome)); extra.forEach(v=>v&&s.add(v));
     $(id).innerHTML=[...s].sort((a,b)=>a.localeCompare(b,"pt")).map(v=>`<option value="${esc(v)}">`).join("");
   };
-  set("dl-comp", COMPS, db.bets.map(b=>b.comp));
-  set("dl-times", TIMES, db.bets.flatMap(b=>[b.mand,b.vis]));
-  set("dl-forma", FORMAS, db.bets.map(b=>b.forma));
-  set("dl-merc", MERCADOS, db.bets.map(b=>b.mercado));
+  set("dl-comp","campeonatos", db.bets.map(b=>b.comp));
+  set("dl-times","equipes", db.bets.flatMap(b=>[b.mand,b.vis]));
+  set("dl-forma","estrategias", db.bets.map(b=>b.forma));
+  set("dl-merc","mercados", db.bets.map(b=>b.mercado));
 }
 function fillMesAnoSelects(){
   const anos = anosDisponiveis();
@@ -581,6 +767,7 @@ function filteredBets(px){
   return list;
 }
 function renderEntradas(){
+  $("f-banca").textContent = banca().nome;
   const q = $("e-busca").value.trim().toLowerCase();
   let list = filteredBets("e");
   if(q) list = list.filter(b=> [b.comp,b.mand,b.vis,b.forma,b.mercado,b.obs].join(" ").toLowerCase().includes(q));
@@ -661,7 +848,7 @@ $("f-save").onclick = async ()=>{
   if(!g("f-mand") && !g("f-vis")){ toast("Informe pelo menos um dos times.", true); return; }
   if(g("f-pl")===""){ toast("Informe o P/L (valor negativo para red).", true); return; }
   const row={
-    user_id:user.id, data,
+    user_id:user.id, banca_id:bancaId, data,
     comp:g("f-comp"), tipo:g("f-tipo"),
     mand:g("f-mand"), vis:g("f-vis"), forma:g("f-forma"), mercado:g("f-merc"),
     stake:+g("f-stake")||0, pl:+g("f-pl")||0,
@@ -680,14 +867,14 @@ $("f-save").onclick = async ()=>{
     $("f-save").disabled=false;
     if(error) return sbErr(error,"salvar a entrada");
     db.bets.push(ins);
-    toast("Entrada salva.");
+    toast(`Entrada salva na ${banca().nome}.`);
   }
   clearForm(); fillDatalists(); fillMesAnoSelects(); renderAll();
 };
 ["e-mes","e-ano"].forEach(id=> $(id).onchange = renderEntradas);
 $("e-busca").oninput = renderEntradas;
 
-/* ================= Análises ================= */
+/* ============ Análises ============ */
 function agrupa(list, keyFn){
   const m = new Map();
   list.forEach(b=>{
@@ -735,32 +922,37 @@ function renderAnalises(){
 }
 ["a-mes","a-ano"].forEach(id=> $(id).onchange = renderAnalises);
 
-/* ================= Config ================= */
+/* ============ Config ============ */
 function renderConfig(){
-  $("c-inicial").value = db.config.inicial;
-  $("c-gestao").value = db.config.gestao;
+  const b = banca();
+  $("c-nome").value = b.nome;
+  $("c-inicial").value = b.inicial;
+  $("c-gestao").value = b.gestao;
+  $("m-banca").textContent = b.nome;
   const tb=$("m-tbody");
-  const movs=[...db.movs].sort((a,b)=>a.data<b.data?1:-1);
+  const movs=[...db.movs].sort((a,c)=>a.data<c.data?1:-1);
   tb.innerHTML = movs.length? movs.map(m=>
     `<tr><td class="mono">${dBR(m.data)}/${String(m.data).slice(0,4)}</td>
       <td>${m.tipo==="aporte"?'<span class="chip back">Aporte</span>':'<span class="chip lay">Levantamento</span>'}</td>
       <td class="num ${m.tipo==="aporte"?"pos":"neg"}">${m.tipo==="aporte"?"+":"−"}${fmt(+m.valor)}</td>
       <td><div class="rowactions"><button class="iconbtn" onclick="delMov('${m.id}')">Excluir</button></div></td></tr>`).join("")
-    : `<tr><td colspan="4" class="empty">Nenhum levantamento ou aporte registrado.</td></tr>`;
+    : `<tr><td colspan="4" class="empty">Nenhum levantamento ou aporte nesta banca.</td></tr>`;
 }
 $("c-save").onclick = async ()=>{
+  const nome = $("c-nome").value.trim() || banca().nome;
   const inicial = +$("c-inicial").value || 0;
   const gestao = +$("c-gestao").value || 0;
-  const { error } = await sb.from("banca_config").upsert({ user_id:user.id, inicial, gestao });
+  const { data, error } = await sb.from("bancas").update({ nome, inicial, gestao }).eq("id", bancaId).eq("user_id", user.id).select().single();
   if(error) return sbErr(error,"salvar os parâmetros");
-  db.config = { inicial, gestao };
+  bancas = bancas.map(b=> b.id===bancaId? data : b);
+  renderBancaSel();
   toast("Parâmetros salvos.");
   renderAll();
 };
 $("m-add").onclick = async ()=>{
   const data=$("m-data").value, valor=+$("m-valor").value;
   if(!data || !valor){ toast("Informe data e valor.", true); return; }
-  const row = { user_id:user.id, data, tipo:$("m-tipo").value, valor };
+  const row = { user_id:user.id, banca_id:bancaId, data, tipo:$("m-tipo").value, valor };
   const { data:ins, error } = await sb.from("banca_movs").insert(row).select().single();
   if(error) return sbErr(error,"registrar a movimentação");
   db.movs.push(ins);
@@ -777,13 +969,15 @@ window.delMov = async id=>{
   renderAll();
 };
 
-/* ================= Backup ================= */
+/* ============ Backup ============ */
 $("io-export").onclick = ()=>{
-  const out = { config:db.config, bets:db.bets, movs:db.movs };
+  const b = banca();
+  const out = { banca:b.nome, config:{inicial:b.inicial, gestao:b.gestao}, bets:db.bets, movs:db.movs };
   const blob = new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download=`gestao-banca-rafael-${new Date().toISOString().slice(0,10)}.json`;
+  const slug = b.nome.toLowerCase().normalize("NFD").replace(/[^\w\s-]/g,"").trim().replace(/\s+/g,"-");
+  a.download=`banca-${slug}-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(a.href);
 };
 $("io-import").onclick = ()=> $("io-file").click();
@@ -794,13 +988,11 @@ $("io-file").onchange = e=>{
     try{
       const d=JSON.parse(r.result);
       if(!d.config || !Array.isArray(d.bets)) throw 0;
-      if(!confirm(`Importar backup com ${d.bets.length} entrada(s)? Os dados atuais no Supabase serão SUBSTITUÍDOS.`)) return;
-      /* apaga tudo do usuário */
-      await sb.from("banca_bets").delete().eq("user_id", user.id);
-      await sb.from("banca_movs").delete().eq("user_id", user.id);
-      /* insere entradas em lotes de 200 (aceita backup da versão localStorage) */
+      if(!confirm(`Importar backup com ${d.bets.length} entrada(s) para a banca "${banca().nome}"? Os dados atuais desta banca serão SUBSTITUÍDOS.`)) return;
+      await sb.from("banca_bets").delete().eq("user_id", user.id).eq("banca_id", bancaId);
+      await sb.from("banca_movs").delete().eq("user_id", user.id).eq("banca_id", bancaId);
       const bets = d.bets.map(b=>({
-        user_id:user.id, data:b.data, comp:b.comp||"", tipo:b.tipo||"Pré Live",
+        user_id:user.id, banca_id:bancaId, data:b.data, comp:b.comp||"", tipo:b.tipo||"Pré Live",
         mand:b.mand||"", vis:b.vis||"", forma:b.forma||"", mercado:b.mercado||"",
         stake:+b.stake||0, pl:+b.pl||0,
         gm:(b.gm===""||b.gm==null)?null:+b.gm, gv:(b.gv===""||b.gv==null)?null:+b.gv,
@@ -810,13 +1002,14 @@ $("io-file").onchange = e=>{
         const { error } = await sb.from("banca_bets").insert(bets.slice(i,i+200));
         if(error) throw error;
       }
-      const movs = (d.movs||[]).map(m=>({ user_id:user.id, data:m.data, tipo:m.tipo, valor:+m.valor }));
+      const movs = (d.movs||[]).map(m=>({ user_id:user.id, banca_id:bancaId, data:m.data, tipo:m.tipo, valor:+m.valor }));
       if(movs.length){
         const { error } = await sb.from("banca_movs").insert(movs);
         if(error) throw error;
       }
-      await sb.from("banca_config").upsert({ user_id:user.id, inicial:+d.config.inicial||0, gestao:+d.config.gestao||0 });
-      await loadAll();
+      await sb.from("bancas").update({ inicial:+d.config.inicial||0, gestao:+d.config.gestao||0 }).eq("id", bancaId).eq("user_id", user.id);
+      await loadBancas();
+      await loadBancaData();
       fillDatalists(); fillMesAnoSelects(); renderAll();
       toast("Backup importado com sucesso.");
     }catch(err){
@@ -828,18 +1021,18 @@ $("io-file").onchange = e=>{
   r.readAsText(f);
 };
 $("io-wipe").onclick = async ()=>{
-  if(!confirm("Apagar TODOS os dados (entradas, movimentações e configuração)?")) return;
+  if(!confirm(`Apagar todas as entradas e movimentações da banca "${banca().nome}"?`)) return;
   if(!confirm("Tem certeza? Esta ação não pode ser desfeita. Exportou um backup?")) return;
-  const r1 = await sb.from("banca_bets").delete().eq("user_id", user.id);
-  const r2 = await sb.from("banca_movs").delete().eq("user_id", user.id);
+  const r1 = await sb.from("banca_bets").delete().eq("user_id", user.id).eq("banca_id", bancaId);
+  const r2 = await sb.from("banca_movs").delete().eq("user_id", user.id).eq("banca_id", bancaId);
   if(r1.error||r2.error) return sbErr(r1.error||r2.error,"apagar os dados");
   db.bets=[]; db.movs=[];
-  toast("Dados apagados.");
+  toast("Dados da banca apagados.");
   fillDatalists(); fillMesAnoSelects(); renderAll();
 };
 
-/* ================= Boot ================= */
-function renderAll(){ renderPainel(); renderEntradas(); renderAnalises(); renderConfig(); }
+/* ============ Boot ============ */
+function renderAll(){ renderPainel(); renderEntradas(); renderAnalises(); renderCadastros(); renderConfig(); }
 clearForm();
 $("m-data").value = new Date().toISOString().slice(0,10);
 boot();
