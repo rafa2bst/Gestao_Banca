@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#0E141B; --panel:#161E27; --panel2:#1B2530; --line:#233040;
@@ -599,6 +600,16 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div><label>Mês</label><select id="e-mes"></select></div>
     <div><label>Ano</label><select id="e-ano"></select></div>
     <div style="flex:1;min-width:200px"><label>Buscar</label><input id="e-busca" placeholder="time, competição, mercado…"></div>
+    <div style="align-self:end"><button class="btn ghost" id="imp-toggle">📥 Importar planilha</button></div>
+  </div>
+  <div class="panel" id="imp-panel" style="display:none">
+    <h2>Importar apostas de planilha</h2>
+    <p class="hint" style="margin-bottom:12px">Use a planilha-modelo com as colunas: <b>Data · Evento · País · Liga · Mercado · Operação · Tipo · Odd · Stake · Resultado · Placar · Observação</b>. Aceita .xlsx ou .csv. As apostas serão <b>adicionadas</b> às existentes desta banca — não importe o mesmo arquivo duas vezes.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="width:auto">
+      <button class="btn" id="imp-run" disabled>Importar apostas</button>
+      <span class="hint" id="imp-info" style="margin:0"></span>
+    </div>
   </div>
 
   <div class="summary-strip" id="e-strip"></div>
@@ -764,7 +775,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v12";
+const APP_VERSAO = "v13";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1695,6 +1706,135 @@ $("io-wipe").onclick = async ()=>{
   fillDatalists(); fillMesAnoSelects(); renderAll();
 };
 
+
+
+/* ============ Importação de planilha (Bolsa) ============ */
+let impLinhas = null;
+const impNorm = t => String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const impNum = v => {
+  if(v==null || v==="") return null;
+  if(typeof v==="number") return v;
+  const n = parseFloat(String(v).replace(/r\$\s*/i,"").replace(/\./g, String(v).includes(",")? "" : ".").replace(",","."));
+  return isNaN(n)? null : n;
+};
+function impData(v){
+  if(v==null || v==="") return null;
+  if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  if(typeof v==="number"){ /* serial do Excel */
+    const d = new Date(Date.UTC(1899,11,30) + v*86400000);
+    return isNaN(d)? null : d.toISOString().slice(0,10);
+  }
+  const t = String(v).trim();
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){
+    const a = m[3].length===2? "20"+m[3] : m[3];
+    return `${a}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+  }
+  return null;
+}
+const IMP_COLS = {
+  data:["data"], evento:["evento","jogo","partida"], pais:["pais"],
+  comp:["liga","competicao","campeonato"], mercado:["mercado"],
+  forma:["operacao","forma","forma de trabalho","estrategia"],
+  tipo:["tipo"], odd:["odd","cotacao"], stake:["stake","valor"],
+  pl:["resultado","result","resultado (r$)","p/l","pl","lucro"],
+  placar:["placar"], obs:["observacao","obs","comentario","notas"]
+};
+function impMapHeader(headers){
+  const map = {};
+  headers.forEach((h,idx)=>{
+    const n = impNorm(h);
+    for(const [campo, aliases] of Object.entries(IMP_COLS)){
+      if(map[campo]===undefined && aliases.includes(n)) map[campo]=idx;
+    }
+  });
+  return map;
+}
+$("imp-toggle").onclick = ()=>{
+  const p=$("imp-panel");
+  p.style.display = p.style.display==="none"? "block":"none";
+};
+$("imp-file").onchange = e=>{
+  const f=e.target.files[0];
+  impLinhas=null; $("imp-run").disabled=true; $("imp-info").textContent="";
+  if(!f) return;
+  const r=new FileReader();
+  r.onload = ()=>{
+    try{
+      const wbk = XLSX.read(r.result, { type:"array", cellDates:true });
+      const ws = wbk.Sheets[wbk.SheetNames.includes("Apostas")? "Apostas" : wbk.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+      if(rows.length<2){ $("imp-info").textContent="A planilha está vazia."; return; }
+      const map = impMapHeader(rows[0]);
+      if(map.data===undefined || map.evento===undefined || map.pl===undefined){
+        $("imp-info").textContent="Cabeçalho não reconhecido — a planilha precisa ter pelo menos as colunas Data, Evento e Resultado.";
+        return;
+      }
+      const out=[], erros=[];
+      rows.slice(1).forEach((linha,ix)=>{
+        const vazio = linha.every(c=>String(c).trim()==="");
+        if(vazio) return;
+        const data = impData(linha[map.data]);
+        const evento = String(linha[map.evento]||"").trim();
+        const pl = impNum(linha[map.pl]);
+        if(!data || !evento || pl===null){ erros.push(ix+2); return; }
+        const times = timesDoJogo(evento);
+        const comp = map.comp!==undefined? String(linha[map.comp]||"").trim():"";
+        let pais = map.pais!==undefined? String(linha[map.pais]||"").trim():"";
+        if(!pais && comp){
+          const cc = cad.campeonatos.find(x=>x.nome.toLowerCase()===comp.toLowerCase() && (x.pais||"").trim());
+          pais = cc? cc.pais : (COMP_PAIS[comp]||"");
+        }
+        let gm=null, gv=null;
+        if(map.placar!==undefined){
+          const pm = String(linha[map.placar]||"").match(/^(\d+)\s*[x×\-]\s*(\d+)$/i);
+          if(pm){ gm=+pm[1]; gv=+pm[2]; }
+        }
+        const tipoRaw = map.tipo!==undefined? impNorm(linha[map.tipo]) : "";
+        out.push({
+          user_id:user.id, banca_id:bancaId, data,
+          mand: times[0]||evento, vis: times[1]||"",
+          pais, comp,
+          mercado: map.mercado!==undefined? String(linha[map.mercado]||"").trim():"",
+          forma: map.forma!==undefined? String(linha[map.forma]||"").trim():"",
+          tipo: tipoRaw.includes("live") && !tipoRaw.includes("pre")? "Live" : "Pré Live",
+          odd: map.odd!==undefined? impNum(linha[map.odd]) : null,
+          stake: map.stake!==undefined? (impNum(linha[map.stake])||0) : 0,
+          pl, gm, gv,
+          obs: map.obs!==undefined? String(linha[map.obs]||"").trim():""
+        });
+      });
+      impLinhas = out;
+      $("imp-info").textContent = `${out.length} aposta(s) prontas para importar` + (erros.length? ` · ${erros.length} linha(s) ignoradas (dados obrigatórios faltando): ${erros.slice(0,8).join(", ")}${erros.length>8?"…":""}` : "");
+      $("imp-run").disabled = !out.length;
+    }catch(err){
+      console.error(err);
+      $("imp-info").textContent = "Não consegui ler o arquivo — confira se é a planilha-modelo (.xlsx ou .csv).";
+    }
+  };
+  r.readAsArrayBuffer(f);
+};
+$("imp-run").onclick = async ()=>{
+  if(!impLinhas || !impLinhas.length) return;
+  if(!confirm(`Importar ${impLinhas.length} aposta(s) para a banca "${banca().nome}"?`)) return;
+  $("imp-run").disabled=true;
+  try{
+    let inseridas=0;
+    for(let i=0;i<impLinhas.length;i+=200){
+      const { data, error } = await sb.from("banca_bets").insert(impLinhas.slice(i,i+200)).select();
+      if(error) throw error;
+      (data||[]).forEach(d=>db.bets.push(d));
+      inseridas += (data||[]).length;
+    }
+    toast(`${inseridas} aposta(s) importadas.`);
+    impLinhas=null; $("imp-file").value=""; $("imp-info").textContent="";
+    $("imp-panel").style.display="none";
+    fillDatalists(); fillMesAnoSelects(); renderAll();
+  }catch(e){ sbErr(e,"importar a planilha"); }
+  $("imp-run").disabled=false;
+};
 
 /* ============ Casa de Aposta ============ */
 const ESPORTES = ["Futebol","Basquete","Tênis","Vôlei","MMA","E-Sports","Futebol Americano","Beisebol","Corrida","Outro"];
