@@ -422,19 +422,21 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div class="formgrid">
       <div class="c2"><label>Data</label><input type="date" id="j-data"></div>
       <div class="c3"><label>Jogo</label><input id="j-jogo" placeholder="Ex.: Time A × Time B"></div>
+      <div class="c2"><label>Aposta</label><select id="j-aposta"><option value="back">Back (a favor)</option><option value="lay">Lay (contra)</option></select></div>
       <div class="c2"><label>Odd</label><input type="number" step="0.01" id="j-odd" placeholder="Ex.: 1.50"></div>
       <div class="c2"><label>Stake (R$)</label><input type="number" step="0.01" id="j-stake"></div>
+      <div class="c2"><label>Comissão da casa (%)</label><input type="number" step="0.1" id="j-comissao"></div>
       <div class="c2"><label>Resultado</label><select id="j-res"><option value="green">Green ✅</option><option value="red">Red ❌</option></select></div>
       <div class="c6" style="display:flex;gap:10px">
         <button class="btn" id="j-save">Registrar entrada</button>
         <button class="btn ghost" id="j-cancel" style="display:none">Cancelar edição</button>
       </div>
     </div>
-    <p class="hint">O lucro é calculado automaticamente: <b>green = stake × (odd − 1)</b> · <b>red = − stake</b>. A stake vem sugerida como % de gestão × banca atual (juros compostos), mas pode ser alterada.</p>
+    <p class="hint"><b>Back:</b> green = stake × (odd − 1) × (1 − comissão) · red = − stake &nbsp;|&nbsp; <b>Lay:</b> green = stake × (1 − comissão) · red = − stake × (odd − 1). A comissão da casa só incide sobre o ganho. A stake vem sugerida como % de gestão × banca atual.</p>
   </div>
   <div class="panel" style="padding:0;overflow-x:auto">
     <table>
-      <thead><tr><th>#</th><th>Data</th><th>Jogo</th><th class="num">Odd</th><th class="num">Stake</th><th>Resultado</th><th class="num">P/L</th><th class="num">Banca após</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>Data</th><th>Jogo</th><th>Tipo</th><th class="num">Odd</th><th class="num">Stake</th><th>Resultado</th><th class="num">P/L</th><th class="num">Banca após</th><th></th></tr></thead>
       <tbody id="j-tbody"></tbody>
     </table>
   </div>
@@ -444,14 +446,15 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 <section id="tab-jproj" class="tab">
   <div class="panel">
     <h2>Parâmetros da projeção</h2>
-    <div class="cfg" style="grid-template-columns:repeat(5,1fr);max-width:1020px">
+    <div class="cfg" style="grid-template-columns:repeat(6,1fr);max-width:1160px">
       <div><label>Banca inicial (R$)</label><input type="number" step="0.01" id="jj-inicial" disabled></div>
       <div><label>Odd média</label><input type="number" step="0.01" id="jj-odd"></div>
       <div><label>% da banca por entrada</label><input type="number" step="1" id="jj-pct"></div>
+      <div><label>Comissão da casa (%)</label><input type="number" step="0.1" id="jj-comissao"></div>
       <div><label>Nº de etapas</label><input type="number" step="1" id="jj-etapas"></div>
       <div style="align-self:end"><button class="btn" id="jj-save">Salvar projeção</button></div>
     </div>
-    <p class="hint">Cada etapa considera <b>1 green</b>: stake = % da banca · lucro = stake × (odd − 1) · a banca cresce em juros compostos etapa após etapa. A banca inicial vem da configuração da banca.</p>
+    <p class="hint">Cada etapa considera <b>1 green de back</b>: stake = % da banca · lucro = stake × (odd − 1) × (1 − comissão) · a banca cresce em juros compostos etapa após etapa. A banca inicial vem da configuração da banca.</p>
   </div>
   <div class="cy-cards" id="jj-cards"></div>
   <div class="panel" style="padding:0;overflow-x:auto">
@@ -479,6 +482,11 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <table><thead><tr><th>Faixa</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">Taxa de acerto</th><th class="num">Lucro</th></tr></thead>
       <tbody id="ja-faixa"></tbody></table>
     </div>
+  </div>
+  <div class="panel">
+    <h2>Back × Lay</h2>
+    <table><thead><tr><th>Tipo</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">Taxa de acerto</th><th class="num">Odd média</th><th class="num">Lucro</th></tr></thead>
+    <tbody id="ja-tipo"></tbody></table>
   </div>
   <div class="panel">
     <h2>Sequências</h2>
@@ -942,7 +950,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v18";
+const APP_VERSAO = "v19";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -3043,12 +3051,19 @@ let jEditId = null;
 const jSorted = ()=> [...db.juros].sort((a,b)=> a.data===b.data? ((a.criado_em||"")<(b.criado_em||"")?-1:1) : (a.data<b.data?-1:1));
 const jBancaAtual = ()=> (+banca().inicial||0) + db.juros.reduce((sm,j)=>sm+(+j.pl||0),0) + movsUntil(()=>true);
 const jPct = ()=> { const g=+banca().gestao||0; return g>0? g : 100; };
+const jComissao = ()=> { const c=+banca().juros_comissao; return isNaN(c)? 6.5 : c; };
+function jCalcPL(aposta, resultado, stake, odd, comissao){
+  const c = Math.max(0, Math.min(99, +comissao||0))/100;
+  if(aposta==="lay") return resultado==="green"? +(stake*(1-c)).toFixed(2) : +(-stake*(odd-1)).toFixed(2);
+  return resultado==="green"? +(stake*(odd-1)*(1-c)).toFixed(2) : +(-stake).toFixed(2);
+}
 function jProjecao(){
   const b = banca();
   const odd = +b.juros_odd||1.5, pctB = jPct()/100, etapas = Math.max(1, Math.min(200, +b.juros_etapas||20));
+  const c = jComissao()/100;
   const rows=[]; let bk = +b.inicial||0;
   for(let i=1;i<=etapas;i++){
-    const stake = bk*pctB, lucro = stake*(odd-1), fim = bk+lucro;
+    const stake = bk*pctB, lucro = stake*(odd-1)*(1-c), fim = bk+lucro;
     rows.push({ n:i, banca:bk, stake, lucro, fim });
     bk = fim;
   }
@@ -3064,12 +3079,12 @@ function renderJurosEntradas(){
   const atual = jBancaAtual();
   const proj = jProjecao();
   const stakeSug = atual*jPct()/100;
-  const lucroEsp = stakeSug*((+banca().juros_odd||1.5)-1);
+  const lucroEsp = stakeSug*((+banca().juros_odd||1.5)-1)*(1-jComissao()/100);
   $("j-next").innerHTML =
     `<div><div class="k">Próxima entrada</div></div>
      <div><div class="k">Banca atual</div><div class="v">${fmt(atual)}</div></div>
      <div><div class="k">Stake sugerida (${jPct()}%)</div><div class="v">${fmt(stakeSug)}</div></div>
-     <div><div class="k">Lucro esperado (odd ${(+banca().juros_odd||1.5).toFixed(2).replace(".",",")})</div><div class="v">${fmt(lucroEsp)}</div></div>
+     <div><div class="k">Lucro esperado (odd ${(+banca().juros_odd||1.5).toFixed(2).replace(".",",")} · comissão ${jComissao().toFixed(1).replace(".",",")}%)</div><div class="v">${fmt(lucroEsp)}</div></div>
      <div><div class="k">Etapa da projeção</div><div class="v">${Math.min(jEtapaAtual(proj), proj.etapas)} / ${proj.etapas}</div></div>`;
   if(!$("j-data").value) $("j-data").value = new Date().toISOString().slice(0,10);
   if(!jEditId) $("j-stake").placeholder = stakeSug? stakeSug.toFixed(2) : "";
@@ -3081,6 +3096,7 @@ function renderJurosEntradas(){
       <td class="mono">${i+1}</td>
       <td class="mono">${dBR(j.data)}</td>
       <td>${esc(j.jogo)||"—"}</td>
+      <td><span class="chip ${(j.aposta||"back")==="lay"?"lay":"back"}">${(j.aposta||"back")==="lay"?"Lay":"Back"}</span></td>
       <td class="num">${oddFmt(+j.odd>0? +j.odd:null)}</td>
       <td class="num">${fmt(+j.stake||0)}</td>
       <td>${j.resultado==="green"? '<span class="chip st-green">Green</span>':'<span class="chip st-red">Red</span>'}</td>
@@ -3090,12 +3106,14 @@ function renderJurosEntradas(){
         <button class="iconbtn" onclick="editJuros('${j.id}')">Editar</button>
         <button class="iconbtn" onclick="delJuros('${j.id}')">Excluir</button></div></td>
     </tr>`;
-  }).join("") : `<tr><td colspan="9" class="empty">Nenhuma entrada registrada — a banca começa em ${fmt(+banca().inicial||0)}.</td></tr>`;
+  }).join("") : `<tr><td colspan="10" class="empty">Nenhuma entrada registrada — a banca começa em ${fmt(+banca().inicial||0)}.</td></tr>`;
 }
 function jClearForm(){
   jEditId=null;
   ["j-jogo","j-odd","j-stake"].forEach(id=>$(id).value="");
   $("j-res").value="green";
+  $("j-aposta").value="back";
+  $("j-comissao").value = jComissao();
   $("j-data").value = new Date().toISOString().slice(0,10);
   $("j-f-title").textContent="Registrar entrada";
   $("j-save").textContent="Registrar entrada";
@@ -3111,11 +3129,13 @@ $("j-save").onclick = async ()=>{
   if(odd<=1){ toast("Informe uma odd maior que 1.", true); return; }
   if(stake<=0){ toast("Informe a stake.", true); return; }
   const res = $("j-res").value;
+  const aposta = $("j-aposta").value;
+  const comissao = +$("j-comissao").value||0;
   const base = {
     user_id:user.id, banca_id:bancaId,
     data:$("j-data").value, jogo:$("j-jogo").value.trim(),
-    odd, stake, resultado:res,
-    pl: res==="green"? +(stake*(odd-1)).toFixed(2) : -stake
+    aposta, comissao, odd, stake, resultado:res,
+    pl: jCalcPL(aposta, res, stake, odd, comissao)
   };
   $("j-save").disabled=true;
   if(jEditId){
@@ -3138,6 +3158,7 @@ window.editJuros = id=>{
   jEditId=id;
   $("j-data").value=j.data||""; $("j-jogo").value=j.jogo||"";
   $("j-odd").value=j.odd; $("j-stake").value=j.stake; $("j-res").value=j.resultado;
+  $("j-aposta").value=j.aposta||"back"; $("j-comissao").value = j.comissao!=null? j.comissao : jComissao();
   $("j-f-title").textContent="Editando entrada";
   $("j-save").textContent="Salvar alterações";
   $("j-cancel").style.display="inline-block";
@@ -3159,6 +3180,7 @@ function renderJurosProj(){
   if(document.activeElement!==$("jj-odd")) $("jj-odd").value = +b.juros_odd||1.5;
   if(document.activeElement!==$("jj-pct")) $("jj-pct").value = jPct();
   if(document.activeElement!==$("jj-etapas")) $("jj-etapas").value = +b.juros_etapas||20;
+  if(document.activeElement!==$("jj-comissao")) $("jj-comissao").value = jComissao();
   const proj = jProjecao();
   const atual = jBancaAtual();
   const etapa = jEtapaAtual(proj);
@@ -3184,6 +3206,7 @@ $("jj-save").onclick = async ()=>{
   const upd = {
     juros_odd: +$("jj-odd").value||1.5,
     gestao: +$("jj-pct").value||100,
+    juros_comissao: Math.max(0, Math.min(99, +$("jj-comissao").value||0)),
     juros_etapas: Math.max(1, Math.min(200, +$("jj-etapas").value||20))
   };
   const { data, error } = await sb.from("bancas").update(upd).eq("id", bancaId).eq("user_id", user.id).select().single();
@@ -3265,6 +3288,18 @@ function renderJurosAnalises(){
     return `<tr><td>${nome}</td><td class="num">${arr.length}</td>
       <td class="num pos">${g}</td><td class="num neg">${r}</td>
       <td class="num">${(g+r)? pct(g/(g+r)) : "—"}</td>
+      <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
+  }).join("");
+  $("ja-tipo").innerHTML = [["back","Back"],["lay","Lay"]].map(([k,nome])=>{
+    const arr = list.filter(j=> (j.aposta||"back")===k);
+    if(!arr.length) return `<tr style="opacity:.35"><td>${nome}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
+    const g=arr.filter(j=>j.resultado==="green").length, r=arr.filter(j=>j.resultado==="red").length;
+    const pl=arr.reduce((sm,j)=>sm+(+j.pl||0),0);
+    const odds=arr.map(j=>+j.odd).filter(v=>v>0);
+    return `<tr><td><span class="chip ${k==="lay"?"lay":"back"}">${nome}</span></td><td class="num">${arr.length}</td>
+      <td class="num pos">${g}</td><td class="num neg">${r}</td>
+      <td class="num">${(g+r)? pct(g/(g+r)) : "—"}</td>
+      <td class="num">${oddFmt(odds.length? odds.reduce((a,b)=>a+b,0)/odds.length : null)}</td>
       <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
   }).join("");
   const seqList = jSorted().filter(j=> String(j.data).startsWith(ano) && (mes==="all" || +String(j.data).slice(5,7)===+mes));
