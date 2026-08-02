@@ -422,11 +422,13 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div class="formgrid">
       <div class="c2"><label>Data</label><input type="date" id="j-data"></div>
       <div class="c3"><label>Jogo</label><input id="j-jogo" placeholder="Ex.: Time A × Time B"></div>
+      <div class="c2"><label>País</label><input list="dl-pais" id="j-pais" placeholder="Ex.: Brasil"></div>
       <div class="c2"><label>Aposta</label><select id="j-aposta"><option value="back">Back (a favor)</option><option value="lay">Lay (contra)</option></select></div>
       <div class="c2"><label>Odd</label><input type="number" step="0.01" id="j-odd" placeholder="Ex.: 1.50"></div>
       <div class="c2"><label id="j-stake-label">Stake (R$)</label><input type="number" step="0.01" id="j-stake"></div>
       <div class="c2"><label>Comissão da casa (%)</label><input type="number" step="0.1" id="j-comissao"></div>
       <div class="c2"><label>Resultado</label><select id="j-res"><option value="green">Green ✅</option><option value="red">Red ❌</option></select></div>
+      <div class="c4" style="align-self:end"><div id="j-preview" class="hint" style="margin:0"></div></div>
       <div class="c6" style="display:flex;gap:10px">
         <button class="btn" id="j-save">Registrar entrada</button>
         <button class="btn ghost" id="j-cancel" style="display:none">Cancelar edição</button>
@@ -482,6 +484,11 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <table><thead><tr><th>Faixa</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">Taxa de acerto</th><th class="num">Lucro</th></tr></thead>
       <tbody id="ja-faixa"></tbody></table>
     </div>
+  </div>
+  <div class="panel">
+    <h2>Por país</h2>
+    <table><thead><tr><th>País</th><th class="num">Entradas</th><th class="num">G</th><th class="num">R</th><th class="num">Taxa de acerto</th><th class="num">Lucro</th></tr></thead>
+    <tbody id="ja-pais"></tbody></table>
   </div>
   <div class="panel">
     <h2>Back × Lay</h2>
@@ -950,7 +957,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v20";
+const APP_VERSAO = "v21";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -3096,7 +3103,7 @@ function renderJurosEntradas(){
     return `<tr class="${j.resultado==="green"?"g":"r"}">
       <td class="mono">${i+1}</td>
       <td class="mono">${dBR(j.data)}</td>
-      <td>${esc(j.jogo)||"—"}</td>
+      <td>${esc(j.jogo)||"—"}${j.pais?`<div style="font-size:11px;color:var(--dim)">${esc(j.pais)}</div>`:""}</td>
       <td><span class="chip ${(j.aposta||"back")==="lay"?"lay":"back"}">${(j.aposta||"back")==="lay"?"Lay":"Back"}</span></td>
       <td class="num">${oddFmt(+j.odd>0? +j.odd:null)}</td>
       <td class="num">${fmt(+j.stake||0)}</td>
@@ -3111,7 +3118,8 @@ function renderJurosEntradas(){
 }
 function jClearForm(){
   jEditId=null;
-  ["j-jogo","j-odd","j-stake"].forEach(id=>$(id).value="");
+  ["j-jogo","j-pais","j-odd","j-stake"].forEach(id=>$(id).value="");
+  $("j-preview").innerHTML="";
   $("j-res").value="green";
   $("j-aposta").value="back";
   $("j-stake-label").textContent = "Stake (R$)";
@@ -3121,9 +3129,23 @@ function jClearForm(){
   $("j-save").textContent="Registrar entrada";
   $("j-cancel").style.display="none";
 }
+function jPreview(){
+  const aposta=$("j-aposta").value, odd=+$("j-odd").value||0;
+  let v=+$("j-stake").value||0; if(!v) v=+($("j-stake").placeholder||0);
+  const c=+$("j-comissao").value||0;
+  const el=$("j-preview");
+  if(odd<=1 || v<=0){ el.innerHTML=""; return; }
+  const bruto = aposta==="lay"? v/(odd-1) : v*(odd-1);
+  const comis = bruto*(Math.max(0,Math.min(99,c))/100);
+  const liq = bruto-comis;
+  const perda = aposta==="lay"? v : v;
+  el.innerHTML = `Se <b class="pos">green</b>: bruto ${fmt(bruto)} − comissão (${c.toFixed(1).replace(".",",")}%) ${fmt(comis)} = <b class="pos">você fica com ${fmt(liq)}</b> · se <b class="neg">red</b>: −${fmt(perda)}`;
+}
 $("j-aposta").onchange = ()=>{
   $("j-stake-label").textContent = $("j-aposta").value==="lay"? "Responsabilidade (R$)" : "Stake (R$)";
+  jPreview();
 };
+["j-odd","j-stake","j-comissao"].forEach(id=> $(id).oninput = jPreview);
 $("j-cancel").onclick = ()=>{ jClearForm(); renderJuros(); };
 $("j-save").onclick = async ()=>{
   if(tipoAtivo()!=="juros") return;
@@ -3139,6 +3161,7 @@ $("j-save").onclick = async ()=>{
   const base = {
     user_id:user.id, banca_id:bancaId,
     data:$("j-data").value, jogo:$("j-jogo").value.trim(),
+    pais:$("j-pais").value.trim(),
     aposta, comissao, odd, stake, resultado:res,
     pl: jCalcPL(aposta, res, stake, odd, comissao)
   };
@@ -3162,6 +3185,7 @@ window.editJuros = id=>{
   const j=db.juros.find(x=>x.id===id); if(!j) return;
   jEditId=id;
   $("j-data").value=j.data||""; $("j-jogo").value=j.jogo||"";
+  $("j-pais").value=j.pais||"";
   $("j-odd").value=j.odd; $("j-stake").value=j.stake; $("j-res").value=j.resultado;
   $("j-aposta").value=j.aposta||"back"; $("j-comissao").value = j.comissao!=null? j.comissao : jComissao();
   $("j-stake-label").textContent = (j.aposta||"back")==="lay"? "Responsabilidade (R$)" : "Stake (R$)";
@@ -3296,6 +3320,19 @@ function renderJurosAnalises(){
       <td class="num">${(g+r)? pct(g/(g+r)) : "—"}</td>
       <td class="num ${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</td></tr>`;
   }).join("");
+  const pm = new Map();
+  list.forEach(j=>{
+    const k=(j.pais||"Sem país").trim()||"Sem país";
+    if(!pm.has(k)) pm.set(k,{n:0,g:0,r:0,pl:0});
+    const o=pm.get(k); o.n++; o.pl+= +j.pl||0;
+    if(j.resultado==="green")o.g++; else o.r++;
+  });
+  $("ja-pais").innerHTML = pm.size? [...pm.entries()].sort((a,b)=>b[1].pl-a[1].pl).map(([k,o])=>
+    `<tr><td>${esc(k)}</td><td class="num">${o.n}</td>
+      <td class="num pos">${o.g}</td><td class="num neg">${o.r}</td>
+      <td class="num">${(o.g+o.r)? pct(o.g/(o.g+o.r)) : "—"}</td>
+      <td class="num ${cls(o.pl)}">${(o.pl>0?"+":"")+fmt(o.pl)}</td></tr>`).join("")
+    : `<tr><td colspan="6" class="empty">Sem entradas no período.</td></tr>`;
   $("ja-tipo").innerHTML = [["back","Back"],["lay","Lay"]].map(([k,nome])=>{
     const arr = list.filter(j=> (j.aposta||"back")===k);
     if(!arr.length) return `<tr style="opacity:.35"><td>${nome}</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>`;
