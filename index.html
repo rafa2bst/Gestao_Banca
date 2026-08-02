@@ -424,7 +424,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <div class="c3"><label>Jogo</label><input id="j-jogo" placeholder="Ex.: Time A × Time B"></div>
       <div class="c2"><label>Aposta</label><select id="j-aposta"><option value="back">Back (a favor)</option><option value="lay">Lay (contra)</option></select></div>
       <div class="c2"><label>Odd</label><input type="number" step="0.01" id="j-odd" placeholder="Ex.: 1.50"></div>
-      <div class="c2"><label>Stake (R$)</label><input type="number" step="0.01" id="j-stake"></div>
+      <div class="c2"><label id="j-stake-label">Stake (R$)</label><input type="number" step="0.01" id="j-stake"></div>
       <div class="c2"><label>Comissão da casa (%)</label><input type="number" step="0.1" id="j-comissao"></div>
       <div class="c2"><label>Resultado</label><select id="j-res"><option value="green">Green ✅</option><option value="red">Red ❌</option></select></div>
       <div class="c6" style="display:flex;gap:10px">
@@ -432,11 +432,11 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
         <button class="btn ghost" id="j-cancel" style="display:none">Cancelar edição</button>
       </div>
     </div>
-    <p class="hint"><b>Back:</b> green = stake × (odd − 1) × (1 − comissão) · red = − stake &nbsp;|&nbsp; <b>Lay:</b> green = stake × (1 − comissão) · red = − stake × (odd − 1). A comissão da casa só incide sobre o ganho. A stake vem sugerida como % de gestão × banca atual.</p>
+    <p class="hint"><b>Back → Stake:</b> green = stake × (odd − 1) × (1 − comissão) · red = − stake &nbsp;|&nbsp; <b>Lay → Responsabilidade:</b> green = responsabilidade ÷ (odd − 1) × (1 − comissão) · red = − responsabilidade. Nos dois casos o valor informado é <b>quanto você está arriscando</b>, e a comissão só incide sobre o ganho. O valor vem sugerido como % de gestão × banca atual.</p>
   </div>
   <div class="panel" style="padding:0;overflow-x:auto">
     <table>
-      <thead><tr><th>#</th><th>Data</th><th>Jogo</th><th>Tipo</th><th class="num">Odd</th><th class="num">Stake</th><th>Resultado</th><th class="num">P/L</th><th class="num">Banca após</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>Data</th><th>Jogo</th><th>Tipo</th><th class="num">Odd</th><th class="num">Stake / Resp.</th><th>Resultado</th><th class="num">P/L</th><th class="num">Banca após</th><th></th></tr></thead>
       <tbody id="j-tbody"></tbody>
     </table>
   </div>
@@ -950,7 +950,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v19";
+const APP_VERSAO = "v20";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -3052,10 +3052,11 @@ const jSorted = ()=> [...db.juros].sort((a,b)=> a.data===b.data? ((a.criado_em||
 const jBancaAtual = ()=> (+banca().inicial||0) + db.juros.reduce((sm,j)=>sm+(+j.pl||0),0) + movsUntil(()=>true);
 const jPct = ()=> { const g=+banca().gestao||0; return g>0? g : 100; };
 const jComissao = ()=> { const c=+banca().juros_comissao; return isNaN(c)? 6.5 : c; };
-function jCalcPL(aposta, resultado, stake, odd, comissao){
+function jCalcPL(aposta, resultado, valor, odd, comissao){
+  /* back: valor = stake · lay: valor = responsabilidade (quanto você arrisca) */
   const c = Math.max(0, Math.min(99, +comissao||0))/100;
-  if(aposta==="lay") return resultado==="green"? +(stake*(1-c)).toFixed(2) : +(-stake*(odd-1)).toFixed(2);
-  return resultado==="green"? +(stake*(odd-1)*(1-c)).toFixed(2) : +(-stake).toFixed(2);
+  if(aposta==="lay") return resultado==="green"? +((valor/(odd-1))*(1-c)).toFixed(2) : +(-valor).toFixed(2);
+  return resultado==="green"? +(valor*(odd-1)*(1-c)).toFixed(2) : +(-valor).toFixed(2);
 }
 function jProjecao(){
   const b = banca();
@@ -3113,12 +3114,16 @@ function jClearForm(){
   ["j-jogo","j-odd","j-stake"].forEach(id=>$(id).value="");
   $("j-res").value="green";
   $("j-aposta").value="back";
+  $("j-stake-label").textContent = "Stake (R$)";
   $("j-comissao").value = jComissao();
   $("j-data").value = new Date().toISOString().slice(0,10);
   $("j-f-title").textContent="Registrar entrada";
   $("j-save").textContent="Registrar entrada";
   $("j-cancel").style.display="none";
 }
+$("j-aposta").onchange = ()=>{
+  $("j-stake-label").textContent = $("j-aposta").value==="lay"? "Responsabilidade (R$)" : "Stake (R$)";
+};
 $("j-cancel").onclick = ()=>{ jClearForm(); renderJuros(); };
 $("j-save").onclick = async ()=>{
   if(tipoAtivo()!=="juros") return;
@@ -3159,6 +3164,7 @@ window.editJuros = id=>{
   $("j-data").value=j.data||""; $("j-jogo").value=j.jogo||"";
   $("j-odd").value=j.odd; $("j-stake").value=j.stake; $("j-res").value=j.resultado;
   $("j-aposta").value=j.aposta||"back"; $("j-comissao").value = j.comissao!=null? j.comissao : jComissao();
+  $("j-stake-label").textContent = (j.aposta||"back")==="lay"? "Responsabilidade (R$)" : "Stake (R$)";
   $("j-f-title").textContent="Editando entrada";
   $("j-save").textContent="Salvar alterações";
   $("j-cancel").style.display="inline-block";
