@@ -750,6 +750,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
       <div class="c2"><label>Tipo</label><select id="f-tipo"><option>Pré Live</option><option>Live</option></select></div>
       <div class="c2"><label>Odd</label><input type="number" step="0.01" min="1" id="f-odd" placeholder="Ex.: 1,85"></div>
       <div class="c2"><label>Stake (R$)</label><input type="number" step="0.01" id="f-stake" placeholder="0,00"></div>
+      <div class="c2"><label>Situação</label><select id="f-sit"><option value="enc">Encerrada</option><option value="pend">Pendente ⏳</option></select></div>
       <div class="c2"><label>P/L (R$)</label><input type="number" step="0.01" id="f-pl" placeholder="+ green · − red"></div>
       <div class="c2"><label>Placar (M × V)</label>
         <div style="display:flex;gap:6px;align-items:center">
@@ -771,6 +772,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
     <div><label>Mês</label><select id="e-mes"></select></div>
     <div><label>Ano</label><select id="e-ano"></select></div>
     <div><label>Origem</label><select id="e-orig"><option value="all">Todas</option><option value="bot">Bot</option><option value="manual">Manuais</option></select></div>
+    <div><label>Situação</label><select id="e-sit"><option value="all">Todas</option><option value="pend">Pendentes</option><option value="enc">Encerradas</option></select></div>
     <div style="flex:1;min-width:200px"><label>Buscar</label><input id="e-busca" placeholder="time, competição, mercado…"></div>
     <div style="align-self:end"><button class="btn ghost" id="imp-toggle">📥 Importar planilha</button></div>
   </div>
@@ -957,7 +959,7 @@ tr.subt td{color:var(--mut);font-weight:700;border-bottom:2px solid var(--line)}
 
 <script>
 /* ============ CONFIGURAÇÃO DO SUPABASE ============ */
-const APP_VERSAO = "v21";
+const APP_VERSAO = "v22";
 const SUPABASE_URL = "https://zfsmrhsarjzxnsntfwog.supabase.co";
 const SUPABASE_KEY = "sb_publishable_umDFIXKEgoQHjDu8UY-wDA_Sdno9GtB";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1521,6 +1523,10 @@ function updateCompList(){
     + (p? "" : [...extras].map(v=>`<option value="${esc(v)}">`).join(""));
 }
 $("f-pais").addEventListener("input", updateCompList);
+$("f-sit").addEventListener("change", ()=>{
+  const pend = $("f-sit").value==="pend";
+  ["f-pl","f-gm","f-gv"].forEach(id=>{ $(id).disabled = pend; if(pend) $(id).value=""; });
+});
 /* preenche o país automaticamente quando a competição é conhecida */
 $("f-comp").addEventListener("change", ()=>{
   const comp = $("f-comp").value.trim();
@@ -1548,6 +1554,13 @@ function filteredBets(px){
   const orig = $(px+"-orig") ? $(px+"-orig").value : "all";
   if(orig==="bot") list = list.filter(isBot);
   else if(orig==="manual") list = list.filter(b=>!isBot(b));
+  if(px==="e"){
+    const sit = $("e-sit").value;
+    if(sit==="pend") list = list.filter(b=>b.pendente);
+    else if(sit==="enc") list = list.filter(b=>!b.pendente);
+  } else {
+    list = list.filter(b=>!b.pendente); /* pendentes ficam fora dos relatórios até encerrar */
+  }
   return list;
 }
 function renderEntradas(){
@@ -1556,12 +1569,14 @@ function renderEntradas(){
   let list = filteredBets("e");
   if(q) list = list.filter(b=> [b.comp,b.pais,b.mand,b.vis,b.forma,b.mercado,b.obs].join(" ").toLowerCase().includes(q));
 
-  const g=list.filter(b=>+b.pl>0).length, r=list.filter(b=>+b.pl<0).length;
-  const pl=plOf(list), st=stakeOf(list);
+  const g=list.filter(b=>+b.pl>0 && !b.pendente).length, r=list.filter(b=>+b.pl<0 && !b.pendente).length;
+  const nPend=list.filter(b=>b.pendente).length;
+  const pl=plOf(list.filter(b=>!b.pendente)), st=stakeOf(list);
   $("e-strip").innerHTML =
     `<div><span>Entradas </span><b>${list.length}</b></div>
      <div><span>Greens </span><b class="pos">${g}</b></div>
      <div><span>Reds </span><b class="neg">${r}</b></div>
+     ${nPend?`<div><span>Pendentes </span><b style="color:var(--gold)">${nPend}</b></div>`:""}
      <div><span>Stake total </span><b>${fmt(st)}</b></div>
      <div><span>P/L </span><b class="${cls(pl)}">${(pl>0?"+":"")+fmt(pl)}</b></div>
      <div><span>ROI/stake </span><b class="${cls(pl)}">${st? (pl>0?"+":"")+pct(pl/st) : "—"}</b></div>
@@ -1571,7 +1586,7 @@ function renderEntradas(){
   tb.innerHTML = list.length? [...list].reverse().map(b=>{
     const isLay = /lay/i.test(b.forma||"");
     const roi = +b.stake? (+b.pl)/(+b.stake) : null;
-    return `<tr class="${+b.pl>0?"g":(+b.pl<0?"r":"")}">
+    return `<tr class="${b.pendente?"":(+b.pl>0?"g":(+b.pl<0?"r":""))}">
       <td class="mono">${dBR(b.data)}</td>
       <td>${esc(b.comp)||"—"}${b.pais?`<div style="font-size:11px;color:var(--dim)">${esc(b.pais)}</div>`:""}</td>
       <td><b>${esc(b.mand)}</b> ${b.gm!==null&&b.gm!==undefined?`<span class="mono">${b.gm}×${b.gv}</span>`:"×"} <b>${esc(b.vis)}</b>
@@ -1581,9 +1596,10 @@ function renderEntradas(){
       <td><span class="chip ${b.tipo==="Live"?"live":"pre"}">${b.tipo==="Live"?"Live":"Pré"}</span>${isBot(b)?' <span class="chip st-pendente" title="Entrada importada do robô">BOT</span>':""}</td>
       <td class="num">${oddFmt(b.odd>0? b.odd : null)}</td>
       <td class="num">${fmt(+b.stake||0)}</td>
-      <td class="num ${cls(+b.pl)}">${(+b.pl>0?"+":"")+fmt(+b.pl||0)}</td>
-      <td class="num ${roi!=null?cls(roi):""}">${roi!=null? (roi>0?"+":"")+pct(roi):"—"}</td>
+      <td class="num ${b.pendente?"":cls(+b.pl)}">${b.pendente? '<span class="chip st-pendente">Pendente ⏳</span>' : (+b.pl>0?"+":"")+fmt(+b.pl||0)}</td>
+      <td class="num ${!b.pendente&&roi!=null?cls(roi):""}">${!b.pendente&&roi!=null? (roi>0?"+":"")+pct(roi):"—"}</td>
       <td><div class="rowactions">
+        ${b.pendente?`<button class="iconbtn" style="border-color:var(--gold);color:var(--gold)" onclick="resolverBet('${b.id}')">Resolver</button>`:""}
         <button class="iconbtn" onclick="editBet('${b.id}')">Editar</button>
         <button class="iconbtn" onclick="delBet('${b.id}')">Excluir</button></div></td>
     </tr>`;}).join("")
@@ -1593,15 +1609,26 @@ function clearForm(){
   ["f-comp","f-pais","f-mand","f-vis","f-forma","f-merc","f-odd","f-stake","f-pl","f-gm","f-gv","f-obs"].forEach(id=>$(id).value="");
   $("f-data").value = new Date().toISOString().slice(0,10);
   $("f-tipo").value = "Pré Live";
+  $("f-sit").value = "enc";
+  ["f-pl","f-gm","f-gv"].forEach(id=>$(id).disabled=false);
   editId=null;
   $("f-title").textContent="Nova entrada";
   $("f-save").textContent="Salvar entrada";
   $("f-cancel").style.display="none";
 }
+window.resolverBet = id=>{
+  editBet(id);
+  $("f-sit").value="enc";
+  ["f-pl","f-gm","f-gv"].forEach(i=>$(i).disabled=false);
+  $("f-title").textContent="Resolvendo aposta pendente — informe o P/L";
+  $("f-pl").focus();
+};
 window.editBet = id=>{
   const b=db.bets.find(x=>x.id===id); if(!b) return;
   editId=id;
   $("f-data").value=b.data;
+  $("f-sit").value = b.pendente? "pend":"enc";
+  ["f-pl","f-gm","f-gv"].forEach(id=>$(id).disabled = !!b.pendente);
   $("f-comp").value=b.comp||"";
   $("f-pais").value=b.pais||"";
   $("f-tipo").value=b.tipo||"Pré Live";
@@ -1634,13 +1661,14 @@ $("f-save").onclick = async ()=>{
   const data=g("f-data");
   if(!data){ toast("Informe a data.", true); return; }
   if(!g("f-mand") && !g("f-vis")){ toast("Informe pelo menos um dos times.", true); return; }
-  if(g("f-pl")===""){ toast("Informe o P/L (valor negativo para red).", true); return; }
+  const pendente = $("f-sit").value==="pend";
+  if(!pendente && g("f-pl")===""){ toast("Informe o P/L (valor negativo para red) ou marque como Pendente.", true); return; }
   const row={
-    user_id:user.id, banca_id:bancaId, data,
+    user_id:user.id, banca_id:bancaId, data, pendente,
     comp:g("f-comp"), pais:g("f-pais"), tipo:g("f-tipo"),
     mand:g("f-mand"), vis:g("f-vis"), forma:g("f-forma"), mercado:g("f-merc"),
-    odd:+g("f-odd")||null, stake:+g("f-stake")||0, pl:+g("f-pl")||0,
-    gm:g("f-gm")===""?null:+g("f-gm"), gv:g("f-gv")===""?null:+g("f-gv"),
+    odd:+g("f-odd")||null, stake:+g("f-stake")||0, pl:pendente? 0 : (+g("f-pl")||0),
+    gm:pendente||g("f-gm")===""?null:+g("f-gm"), gv:pendente||g("f-gv")===""?null:+g("f-gv"),
     obs:g("f-obs")
   };
   $("f-save").disabled=true;
@@ -1650,17 +1678,17 @@ $("f-save").onclick = async ()=>{
     $("f-save").disabled=false;
     if(error) return sbErr(error,"salvar a entrada");
     db.bets = db.bets.map(b=> b.id===editId? upd : b);
-    toast("Entrada atualizada.");
+    toast(row.pendente? "Entrada pendente atualizada." : "Entrada atualizada.");
   } else {
     const { data:ins, error } = await sb.from("banca_bets").insert(row).select().single();
     $("f-save").disabled=false;
     if(error) return sbErr(error,"salvar a entrada");
     db.bets.push(ins);
-    toast(`Entrada salva na ${banca().nome}.`);
+    toast(row.pendente? `Aposta pendente registrada na ${banca().nome} — resolva quando encerrar.` : `Entrada salva na ${banca().nome}.`);
   }
   clearForm(); fillDatalists(); fillMesAnoSelects(); renderAll();
 };
-["e-mes","e-ano","e-orig"].forEach(id=> $(id).onchange = renderEntradas);
+["e-mes","e-ano","e-orig","e-sit"].forEach(id=> $(id).onchange = renderEntradas);
 $("e-busca").oninput = renderEntradas;
 
 /* oferece cadastrar País / Competição / Equipes digitados que não existem no cadastro */
@@ -3171,7 +3199,7 @@ $("j-save").onclick = async ()=>{
     $("j-save").disabled=false;
     if(error) return sbErr(error,"salvar a entrada");
     db.juros = db.juros.map(x=> x.id===jEditId? upd : x);
-    toast("Entrada atualizada.");
+    toast(row.pendente? "Entrada pendente atualizada." : "Entrada atualizada.");
   } else {
     const { data:ins, error } = await sb.from("juros_bets").insert(base).select().single();
     $("j-save").disabled=false;
